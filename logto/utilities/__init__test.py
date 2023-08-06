@@ -1,4 +1,4 @@
-from logto.utilities import removeFalsyKeys, urlsafeEncode
+from . import removeFalsyKeys, urlsafeEncode
 
 class TestRemoveFalsyKeys:
   def test_shouldRemoveNoneAndEmptyString(self):

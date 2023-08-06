@@ -10,14 +10,10 @@ class SessionStorage(Storage):
     return session.get(key, None)
   
   def set(self, key: str, value: str | None) -> None:
-    session.permanent = True
     session[key] = value
-    session.modified = True
   
   def delete(self, key: str) -> None:
-    session.permanent = True
     session.pop(key, None)
-    session.modified = True
 
 client = LogtoClient(
   LogtoConfig(
