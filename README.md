@@ -2,5 +2,19 @@
 
 Still work in progress.
 
-- `logto/` is the Python SDK.
-- `app.py` is a sample Flask app that uses the SDK.
+## Usage
+
+### Installation
+```bash
+pip install logto
+```
+
+### Sample code
+
+See `samples/` directory for example usages.
+
+### Documentation
+
+While the dedicated documentation is still in progress, you can find other integration guides in [Integrate Logto in your application](https://docs.logto.io/docs/recipes/integrate-logto/).
+
+Pick one you are most familiar with, read to know the basic concepts, then come back and check out `samples/` directory for example usages.
