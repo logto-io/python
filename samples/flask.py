@@ -3,7 +3,7 @@ from logto import LogtoClient, LogtoConfig, Storage
 
 app = Flask(__name__)
 
-app.secret_key = b'1234567890abcdef'
+app.secret_key = b'1234567890abcdef' # Replace with your own secret key
 
 class SessionStorage(Storage):
   def get(self, key: str) -> str | None:

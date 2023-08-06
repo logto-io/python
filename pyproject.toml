@@ -21,7 +21,7 @@ pytest-cov = "^4.1.0"
 # Install poethepoet as a poetry plugin to enable the `poetry poe *` command.
 [tool.poe.tasks]
 test = {cmd = "pytest --cov --cov-report=term-missing"}
-flask = {cmd = "flask --app examples.flask --debug run"}
+flask = {cmd = "flask --app samples.flask --debug run"}
 
 [build-system]
 requires = ["poetry-core"]
