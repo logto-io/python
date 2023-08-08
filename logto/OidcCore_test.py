@@ -1,8 +1,19 @@
-from .models.oidc import IdTokenClaims, AccessTokenClaims
+from typing import Any, Callable, Dict
+from jwt import PyJWK
+import jwt
+from pytest_mock import MockerFixture
+import pytest
+
+from . import LogtoException
+from .utilities.test import mockHttp
+from .models.response import TokenResponse, UserInfoResponse
+from .models.oidc import IdTokenClaims, AccessTokenClaims, OidcProviderMetadata
 from .OidcCore import OidcCore
 
+MockHttpJson = Callable[[str, Dict[str, Any] | None, int], None]
 
-class TestOidcCore:
+
+class TestOidcCoreStatic:
     def test_generateState(self):
         assert len(OidcCore.generateState()) == 43
 
@@ -41,3 +52,166 @@ class TestOidcCore:
             scope="admin user",
             client_id="saqre1oqbkpj6zhq85ho0",
         )
+
+
+class TestOidcCore:
+    @pytest.fixture
+    def oidcCore(self, metadata: OidcProviderMetadata) -> OidcCore:
+        return OidcCore(metadata)
+
+    @pytest.fixture
+    def metadata(self) -> OidcProviderMetadata:
+        return OidcProviderMetadata(
+            issuer="https://logto.app",
+            authorization_endpoint="https://logto.app/oidc/auth",
+            token_endpoint="https://logto.app/oidc/auth/token",
+            userinfo_endpoint="https://logto.app/oidc/userinfo",
+            jwks_uri="https://logto.app/oidc/jwks",
+            response_types_supported=[],
+            subject_types_supported=[],
+            id_token_signing_alg_values_supported=[],
+        )
+
+    @pytest.fixture
+    def tokenResponse(self) -> TokenResponse:
+        return TokenResponse(access_token="token", token_type="Bearer", expires_in=3600)
+
+    @pytest.fixture
+    def mockRequest(self, mocker: MockerFixture) -> MockHttpJson:
+        def _mock(
+            method: str = "get",
+            json: Dict[str, Any] | None = None,
+            text: str | None = None,
+            status: int = 200,
+        ):
+            return mockHttp(mocker, method, json, text, status)
+
+        return _mock
+
+    async def test_getProviderMetadata(
+        self,
+        metadata: OidcProviderMetadata,
+        mockRequest: MockHttpJson,
+    ) -> None:
+        discovery_url = "https://discovery.url"
+        mockRequest(json=metadata.__dict__)
+        result = await OidcCore.getProviderMetadata(discovery_url)
+
+        assert result == metadata
+
+    async def test_fetchTokenByCode(
+        self,
+        oidcCore: OidcCore,
+        tokenResponse: TokenResponse,
+        mockRequest: MockHttpJson,
+    ) -> None:
+        mockRequest(method="post", json=tokenResponse.__dict__)
+        result = await oidcCore.fetchTokenByCode(
+            "clientId", "clientSecret", "redirectUri", "code", "codeVerifier"
+        )
+
+        assert result == tokenResponse
+
+    async def test_fetchTokenByCode_failure(
+        self,
+        oidcCore: OidcCore,
+        mockRequest: MockHttpJson,
+    ) -> None:
+        mockRequest(method="post", text="error", status=400)
+        with pytest.raises(LogtoException, match="error"):
+            await oidcCore.fetchTokenByCode(
+                "clientId", "clientSecret", "redirectUri", "code", "codeVerifier"
+            )
+
+    async def test_fetchTokenByRefreshToken(
+        self,
+        oidcCore: OidcCore,
+        tokenResponse: TokenResponse,
+        mockRequest: MockHttpJson,
+    ) -> None:
+        mockRequest(method="post", json=tokenResponse.__dict__)
+        result = await oidcCore.fetchTokenByRefreshToken(
+            "clientId", "clientSecret", "refreshToken"
+        )
+
+        assert result == tokenResponse
+
+    async def test_fetchTokenByRefreshToken_failure(
+        self,
+        oidcCore: OidcCore,
+        mockRequest: MockHttpJson,
+    ) -> None:
+        mockRequest(method="post", text="error", status=400)
+        with pytest.raises(LogtoException, match="error"):
+            await oidcCore.fetchTokenByRefreshToken(
+                "clientId", "clientSecret", "refreshToken"
+            )
+
+    async def test_verifyIdToken(
+        self,
+        oidcCore: OidcCore,
+        mocker: MockerFixture,
+    ) -> None:
+        # Mock PyJWK with a valid key
+        jwk = PyJWK(
+            jwk_data={
+                "kty": "EC",
+                "d": "EQw2P8sukYhYuc_H8Q5pV8oTlXfAd7TM1mB4fwrYuw4BGFBcFx-Y9q5g6lvyxfG9",
+                "use": "sig",
+                "crv": "P-384",
+                "kid": "1",
+                "x": "GWEhvHiHu2nfZNn741QeWPyn3Laphn11wcD9c5LWqPQTaqw-SlJIWXavrvl4Yv7f",
+                "y": "0KiYwX8U2pb74HCRby6ljlNgQGD-v_j5QN-MzXObRYa7XRQzKCrqj0_4BZN6UcS6",
+                "alg": "ES384",
+            }
+        )
+
+        idToken = IdTokenClaims(
+            iss="https://logto.app",
+            aud="foo",
+            exp=9616446400,  # Fri Sep 25 2274 11:06:40 GMT+0000
+            iat=1616446300,
+            sub="user1",
+            name="John Wick",
+            username="john",
+            email="john@wick.com",
+            email_verified=True,
+        )
+
+        # Sign the idToken with the private key
+        idTokenString = jwt.encode(
+            idToken.model_dump(),
+            jwk.key,
+            algorithm="ES384",
+        )
+
+        # Mock `get_signing_key_from_jwt` response from jwksClient
+        mocker.patch(
+            "jwt.jwks_client.PyJWKClient.get_signing_key_from_jwt",
+            return_value=jwk,
+        )
+
+        # No error should be raised
+        oidcCore.verifyIdToken(
+            idToken=idTokenString,
+            clientId="foo",
+        )
+
+    async def test_fetchUserInfo(
+        self,
+        oidcCore: OidcCore,
+        mockRequest: MockHttpJson,
+    ) -> None:
+        mockRequest(json={"sub": "user1"})
+        result = await oidcCore.fetchUserInfo("token")
+
+        assert result == UserInfoResponse(sub="user1")
+
+    async def test_fetchUserInfo_failure(
+        self,
+        oidcCore: OidcCore,
+        mockRequest: MockHttpJson,
+    ) -> None:
+        mockRequest(text="error", status=400)
+        with pytest.raises(LogtoException, match="error"):
+            await oidcCore.fetchUserInfo("token")

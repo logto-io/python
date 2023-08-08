@@ -20,6 +20,8 @@ python-dotenv = "^1.0.0"
 black = "^23.7.0"
 
 # Install poethepoet as a poetry plugin to enable the `poetry poe *` command.
+pytest-mock = "^3.11.1"
+pytest-asyncio = "^0.21.1"
 [tool.poe.tasks]
 test = { cmd = "pytest --cov --cov-report=term-missing" }
 flask = { cmd = "flask --app samples.flask --debug run" }
@@ -33,3 +35,6 @@ build-backend = "poetry.core.masonry.api"
 branch = true
 omit = ["*_test.py"]
 source = ["logto"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
