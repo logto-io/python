@@ -43,6 +43,7 @@ class OidcProviderMetadata(BaseModel):
   op_policy_uri: Optional[str] = None
   op_tos_uri: Optional[str] = None
   end_session_endpoint: Optional[str] = None
+  code_challenge_methods_supported: list[str] = []
 
 class IdTokenClaims(BaseModel):
   """

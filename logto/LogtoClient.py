@@ -136,7 +136,7 @@ class LogtoClient:
 
   def _getAccessToken(self, resource: str) -> str | None:
     """
-    Get the access token for the given resource from storage, no refresh will be
+    Get the valid access token for the given resource from storage, no refresh will be
     performed.
     """
     accessTokenMap = self._getAccessTokenMap()
@@ -169,13 +169,13 @@ class LogtoClient:
       'redirect_uri': redirectUri,
       'response_type': 'code',
       'scope': ' '.join(scopes + OidcCore.defaultScopes),
-      'resource': ' '.join(resources),
+      'resource': resources,
       'prompt': prompt,
       'code_challenge': codeChallenge,
       'code_challenge_method': 'S256',
       'state': state,
       'interaction_mode': interactionMode,
-    }))
+    }), True)
     return f"{authorizationEndpoint}?{query}"
 
   def _getSignInSession(self) -> Optional[SignInSession]:
@@ -294,10 +294,11 @@ class LogtoClient:
     await self._handleTokenResponse('', tokenResponse)
     self._storage.delete('signInSession')
 
-  async def getAccessToken(self, resource: str = '') -> str:
+  async def getAccessToken(self, resource: str = '') -> str | None:
     """
     Get the access token for the given resource. If the access token is expired,
-    it will be refreshed automatically.
+    it will be refreshed automatically. If no refresh token is found, None will
+    be returned.
     """
     accessToken = self._getAccessToken(resource)
     if accessToken is not None:
@@ -305,7 +306,7 @@ class LogtoClient:
 
     refreshToken = self._storage.get('refreshToken')
     if refreshToken is None:
-      raise LogtoException('Refresh token not found')
+      return None
     
     tokenResponse = await (await self.getOidcCore()).fetchTokenByRefreshToken(
       clientId=self.config.appId,
@@ -320,7 +321,8 @@ class LogtoClient:
   async def getAccessTokenClaims(self, resource: str = '') -> AccessTokenClaims:
     """
     Get the claims in the access token for the given resource. If the access token
-    is expired, it will be refreshed automatically.
+    is expired, it will be refreshed automatically. If it's unable to refresh the
+    access token, an exception will be thrown.
     """
     accessToken = await self.getAccessToken(resource)
     return OidcCore.decodeAccessToken(accessToken)

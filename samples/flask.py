@@ -1,6 +1,9 @@
 from flask import Flask, session, redirect, request
-from logto import LogtoClient, LogtoConfig, Storage
+from logto import LogtoClient, LogtoConfig, LogtoException, Storage
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
 app = Flask(__name__)
 
 app.secret_key = b'1234567890abcdef' # Replace with your own secret key
@@ -17,10 +20,10 @@ class SessionStorage(Storage):
 
 client = LogtoClient(
   LogtoConfig(
-    endpoint="http://logto-endpoint.app",
-    appId="replace-with-your-app-id",
-    appSecret="replace-with-your-app-secret",
-    resources=["https://logto-endpoint.app/api"], # Remove if you don't need to access the default Logto API
+    endpoint="http://localhost:3001", # Replace with your Logto endpoint
+    appId=os.getenv("LOGTO_APP_ID") or "replace-with-your-app-id",
+    appSecret=os.getenv("LOGTO_APP_SECRET") or "replace-with-your-app-secret",
+    resources=["https://default.logto.app/api", "https://shopping.api"], # Remove if you don't need to access the default Logto API
     scopes=["email"],
   ),
   SessionStorage(),
@@ -33,10 +36,10 @@ async def index():
       return "Not authenticated <a href='/sign-in'>Sign in</a>"
     return (await client.fetchUserInfo()).model_dump_json(exclude_unset=True) + \
       "<br>" + client.getIdTokenClaims().model_dump_json(exclude_unset=True) + \
-      "<br>" + (await client.getAccessTokenClaims("https://logto-endpoint.app/api")).model_dump_json(exclude_unset=True) + \
+      "<br>" + (await client.getAccessTokenClaims("https://default.logto.app/api")).model_dump_json(exclude_unset=True) + \
       "<br><a href='/sign-out'>Sign out</a>"
-  except LogtoClient.LogtoException as e:
-    return str(e)
+  except LogtoException as e:
+    return str(e) + "<br><a href='/sign-out'>Sign out</a>"
 
 @app.route("/sign-in")
 async def sign_in():
@@ -51,5 +54,5 @@ async def callback():
   try:
     await client.handleSignInCallback(request.url)
     return redirect('/')
-  except LogtoClient.LogtoException as e:
+  except LogtoException as e:
     return str(e)
