@@ -1,6 +1,6 @@
 import hashlib
+import secrets
 import aiohttp
-import random
 from jwt import PyJWKClient
 import jwt
 from typing import List, Optional
@@ -29,7 +29,7 @@ class OidcCore:
         """
         Generate a random string (32 bytes) for the state parameter.
         """
-        return urlsafeEncode(random.randbytes(32))
+        return urlsafeEncode(secrets.token_bytes(32))
 
     def generateCodeVerifier() -> str:
         """
@@ -37,7 +37,7 @@ class OidcCore:
 
         See: https://www.rfc-editor.org/rfc/rfc7636.html#section-4.1
         """
-        return urlsafeEncode(random.randbytes(32))
+        return urlsafeEncode(secrets.token_bytes(32))
 
     def generateCodeChallenge(codeVerifier: str) -> str:
         """
