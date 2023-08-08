@@ -1,5 +1,5 @@
 import base64
-from typing import Any, TypeVar, Union
+from typing import Any, Dict
 
 
 def urlsafeEncode(data: bytes) -> str:
@@ -9,7 +9,7 @@ def urlsafeEncode(data: bytes) -> str:
     return base64.urlsafe_b64encode(data).decode("ascii").rstrip("=")
 
 
-def removeFalsyKeys(data: dict[str, Any]) -> dict[str, Any]:
+def removeFalsyKeys(data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Remove keys with falsy values from the given dictionary.
     """

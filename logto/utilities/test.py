@@ -7,7 +7,7 @@ from logto.models.oidc import OidcProviderMetadata
 
 class MockResponse:
     def __init__(
-        self, json: Dict[str, Any] | None, text: Optional[str], status: int
+        self, json: Optional[Dict[str, Any]], text: Optional[str], status: int
     ) -> None:
         self._json = json
         self._text = text or str(json)
@@ -29,7 +29,7 @@ class MockResponse:
 def mockHttp(
     mocker: MockerFixture,
     method: str,
-    json: Dict[str, Any] | None,
+    json: Optional[Dict[str, Any]],
     text: Optional[str],
     status=200,
 ):

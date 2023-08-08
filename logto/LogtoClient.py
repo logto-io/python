@@ -1,5 +1,5 @@
 import time
-from typing import Dict, Literal, Optional
+from typing import Dict, List, Literal, Optional
 from pydantic import BaseModel
 import urllib.parse
 
@@ -51,7 +51,7 @@ class LogtoConfig(BaseModel):
   there will be no Refresh Token returned in this case.
   """
 
-    resources: list[str] = []
+    resources: List[str] = []
     """
   The API resources that your application needs to access. You can specify multiple
   resources by providing an array of strings.
@@ -60,7 +60,7 @@ class LogtoConfig(BaseModel):
   access control (RBAC) to protect API resources.
   """
 
-    scopes: list[str] = []
+    scopes: List[str] = []
     """
   The scopes (permissions) that your application needs to access.
   Scopes that will be added by default: `openid`, `offline_access` and `profile`.

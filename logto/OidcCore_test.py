@@ -71,7 +71,7 @@ class TestOidcCore:
     def mockRequest(self, mocker: MockerFixture) -> MockRequest:
         def _mock(
             method: str = "get",
-            json: Dict[str, Any] | None = None,
+            json: Optional[Dict[str, Any]] = None,
             text: Optional[str] = None,
             status: int = 200,
         ):
