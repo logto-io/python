@@ -10,18 +10,20 @@ readme = "README.md"
 python = "^3.11"
 aiohttp = "^3.8.5"
 pydantic = "^2.1.1"
-pyjwt = {extras = ["crypto"], version = "^2.8.0"}
+pyjwt = { extras = ["crypto"], version = "^2.8.0" }
 
 [tool.poetry.group.dev.dependencies]
-flask = {extras = ["async"], version = "^2.3.2"}
+flask = { extras = ["async"], version = "^2.3.2" }
 pytest = "^7.4.0"
 pytest-cov = "^4.1.0"
+python-dotenv = "^1.0.0"
+black = "^23.7.0"
 
 # Install poethepoet as a poetry plugin to enable the `poetry poe *` command.
-python-dotenv = "^1.0.0"
 [tool.poe.tasks]
-test = {cmd = "pytest --cov --cov-report=term-missing"}
-flask = {cmd = "flask --app samples.flask --debug run"}
+test = { cmd = "pytest --cov --cov-report=term-missing" }
+flask = { cmd = "flask --app samples.flask --debug run" }
+black = { cmd = "black" }
 
 [build-system]
 requires = ["poetry-core"]

@@ -1,2 +1,2 @@
 class LogtoException(Exception):
-  pass
+    pass
