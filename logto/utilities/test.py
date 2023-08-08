@@ -1,6 +1,8 @@
 from typing import Any, Dict
-
 from pytest_mock import MockerFixture
+
+from logto.Storage import Storage
+from logto.models.oidc import OidcProviderMetadata
 
 
 class MockResponse:
@@ -35,3 +37,29 @@ def mockHttp(
         f"aiohttp.ClientSession.{method}",
         return_value=MockResponse(json=json, text=text, status=status),
     )
+
+
+mockProviderMetadata = OidcProviderMetadata(
+    issuer="https://logto.app",
+    authorization_endpoint="https://logto.app/oidc/auth",
+    token_endpoint="https://logto.app/oidc/auth/token",
+    userinfo_endpoint="https://logto.app/oidc/userinfo",
+    jwks_uri="https://logto.app/oidc/jwks",
+    response_types_supported=[],
+    subject_types_supported=[],
+    id_token_signing_alg_values_supported=[],
+)
+
+
+class MockStorage(Storage):
+    def __init__(self) -> None:
+        self._data: Dict[str, str] = {}
+
+    def get(self, key: str) -> str | None:
+        return self._data.get(key, None)
+
+    def set(self, key: str, value: str | None) -> None:
+        self._data[key] = value
+
+    def delete(self, key: str) -> None:
+        self._data.pop(key, None)

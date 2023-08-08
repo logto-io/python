@@ -5,12 +5,12 @@ from pytest_mock import MockerFixture
 import pytest
 
 from . import LogtoException
-from .utilities.test import mockHttp
+from .utilities.test import mockHttp, mockProviderMetadata
 from .models.response import TokenResponse, UserInfoResponse
 from .models.oidc import IdTokenClaims, AccessTokenClaims, OidcProviderMetadata
 from .OidcCore import OidcCore
 
-MockHttpJson = Callable[[str, Dict[str, Any] | None, int], None]
+MockRequest = Callable[..., None]
 
 
 class TestOidcCoreStatic:
@@ -61,23 +61,14 @@ class TestOidcCore:
 
     @pytest.fixture
     def metadata(self) -> OidcProviderMetadata:
-        return OidcProviderMetadata(
-            issuer="https://logto.app",
-            authorization_endpoint="https://logto.app/oidc/auth",
-            token_endpoint="https://logto.app/oidc/auth/token",
-            userinfo_endpoint="https://logto.app/oidc/userinfo",
-            jwks_uri="https://logto.app/oidc/jwks",
-            response_types_supported=[],
-            subject_types_supported=[],
-            id_token_signing_alg_values_supported=[],
-        )
+        return mockProviderMetadata
 
     @pytest.fixture
     def tokenResponse(self) -> TokenResponse:
         return TokenResponse(access_token="token", token_type="Bearer", expires_in=3600)
 
     @pytest.fixture
-    def mockRequest(self, mocker: MockerFixture) -> MockHttpJson:
+    def mockRequest(self, mocker: MockerFixture) -> MockRequest:
         def _mock(
             method: str = "get",
             json: Dict[str, Any] | None = None,
@@ -91,7 +82,7 @@ class TestOidcCore:
     async def test_getProviderMetadata(
         self,
         metadata: OidcProviderMetadata,
-        mockRequest: MockHttpJson,
+        mockRequest: MockRequest,
     ) -> None:
         discovery_url = "https://discovery.url"
         mockRequest(json=metadata.__dict__)
@@ -103,7 +94,7 @@ class TestOidcCore:
         self,
         oidcCore: OidcCore,
         tokenResponse: TokenResponse,
-        mockRequest: MockHttpJson,
+        mockRequest: MockRequest,
     ) -> None:
         mockRequest(method="post", json=tokenResponse.__dict__)
         result = await oidcCore.fetchTokenByCode(
@@ -115,7 +106,7 @@ class TestOidcCore:
     async def test_fetchTokenByCode_failure(
         self,
         oidcCore: OidcCore,
-        mockRequest: MockHttpJson,
+        mockRequest: MockRequest,
     ) -> None:
         mockRequest(method="post", text="error", status=400)
         with pytest.raises(LogtoException, match="error"):
@@ -127,7 +118,7 @@ class TestOidcCore:
         self,
         oidcCore: OidcCore,
         tokenResponse: TokenResponse,
-        mockRequest: MockHttpJson,
+        mockRequest: MockRequest,
     ) -> None:
         mockRequest(method="post", json=tokenResponse.__dict__)
         result = await oidcCore.fetchTokenByRefreshToken(
@@ -139,7 +130,7 @@ class TestOidcCore:
     async def test_fetchTokenByRefreshToken_failure(
         self,
         oidcCore: OidcCore,
-        mockRequest: MockHttpJson,
+        mockRequest: MockRequest,
     ) -> None:
         mockRequest(method="post", text="error", status=400)
         with pytest.raises(LogtoException, match="error"):
@@ -200,7 +191,7 @@ class TestOidcCore:
     async def test_fetchUserInfo(
         self,
         oidcCore: OidcCore,
-        mockRequest: MockHttpJson,
+        mockRequest: MockRequest,
     ) -> None:
         mockRequest(json={"sub": "user1"})
         result = await oidcCore.fetchUserInfo("token")
@@ -210,7 +201,7 @@ class TestOidcCore:
     async def test_fetchUserInfo_failure(
         self,
         oidcCore: OidcCore,
-        mockRequest: MockHttpJson,
+        mockRequest: MockRequest,
     ) -> None:
         mockRequest(text="error", status=400)
         with pytest.raises(LogtoException, match="error"):
