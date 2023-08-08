@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from typing import Optional
 
 
 class Storage(ABC):
@@ -7,11 +8,11 @@ class Storage(ABC):
     """
 
     @abstractmethod
-    def get(self, key: str) -> str | None:
+    def get(self, key: str) -> Optional[str]:
         ...
 
     @abstractmethod
-    def set(self, key: str, value: str | None) -> None:
+    def set(self, key: str, value: Optional[str]) -> None:
         ...
 
     @abstractmethod

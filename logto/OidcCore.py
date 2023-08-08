@@ -3,6 +3,7 @@ import aiohttp
 import random
 from jwt import PyJWKClient
 import jwt
+from typing import Optional
 
 from .LogtoException import LogtoException
 from .models.oidc import AccessTokenClaims, IdTokenClaims, OidcProviderMetadata
@@ -72,7 +73,7 @@ class OidcCore:
     async def fetchTokenByCode(
         self,
         clientId: str,
-        clientSecret: str | None,
+        clientSecret: Optional[str],
         redirectUri: str,
         code: str,
         codeVerifier: str,
@@ -102,7 +103,7 @@ class OidcCore:
     async def fetchTokenByRefreshToken(
         self,
         clientId: str,
-        clientSecret: str | None,
+        clientSecret: Optional[str],
         refreshToken: str,
         resource: str = "",
     ) -> TokenResponse:

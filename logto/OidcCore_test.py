@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, Optional
 from jwt import PyJWK
 import jwt
 from pytest_mock import MockerFixture
@@ -72,7 +72,7 @@ class TestOidcCore:
         def _mock(
             method: str = "get",
             json: Dict[str, Any] | None = None,
-            text: str | None = None,
+            text: Optional[str] = None,
             status: int = 200,
         ):
             return mockHttp(mocker, method, json, text, status)

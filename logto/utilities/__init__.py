@@ -1,5 +1,5 @@
 import base64
-from typing import Any
+from typing import Any, TypeVar, Union
 
 
 def urlsafeEncode(data: bytes) -> str:

@@ -1,6 +1,4 @@
-from typing import Any, Callable, Dict
-from jwt import PyJWK
-import jwt
+from typing import Any, Callable, Dict, Optional
 from pytest_mock import MockerFixture
 import pytest
 
@@ -25,8 +23,8 @@ class TestLogtoClient:
     def mockRequest(self, mocker: MockerFixture) -> MockRequest:
         def _mock(
             method: str = "get",
-            json: Dict[str, Any] | None = None,
-            text: str | None = None,
+            json: Optional[Dict[str, Any]] = None,
+            text: Optional[str] = None,
             status: int = 200,
         ):
             return mockHttp(mocker, method, json, text, status)
