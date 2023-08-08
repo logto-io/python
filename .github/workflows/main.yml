@@ -24,7 +24,11 @@ jobs:
       - uses: abatilo/actions-poetry@v2
 
       - name: Install dependencies
-        run: poetry install
+        run: |
+          # update lockfile to fix a pytest issue in python < 3.11
+          poetry lock
+          poetry install
+          poetry self add 'poethepoet[poetry_plugin]'
 
       - name: Build
         run: poetry build
