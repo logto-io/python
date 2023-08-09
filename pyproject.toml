@@ -5,6 +5,10 @@ description = "Logto Python SDK."
 authors = ["Silverhand Inc. <contact@silverhand.io>"]
 license = "MIT"
 readme = "README.md"
+homepage = "https://logto.io/"
+repository = "https://github.com/logto-io/python"
+documentation = "https://github.com/logto-io/python"
+keywords = ["logto", "auth", "user", "authentication", "authorization"]
 
 [tool.poetry.dependencies]
 python = "^3.8"

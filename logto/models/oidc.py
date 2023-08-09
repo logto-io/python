@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import List, Optional
 from pydantic import BaseModel, ConfigDict
 
@@ -48,6 +49,39 @@ class OidcProviderMetadata(BaseModel):
     code_challenge_methods_supported: List[str] = []
 
 
+class OAuthScope(Enum):
+    offlineAccess = "offline_access"
+
+
+class UserInfoScope(Enum):
+    """
+    The available scopes for the userinfo endpoint and the ID token claims.
+    """
+
+    openid = "openid"
+    """The preserved scope for OpenID Connect. It maps to the `sub` claim."""
+    profile = "profile"
+    """The scope for the basic profile. It maps to the `name`, `username`, `picture` claims."""
+    email = "email"
+    """The scope for the email address. It maps to the `email`, `email_verified` claims."""
+    phone = "phone"
+    """The scope for the phone number. It maps to the `phone_number`, `phone_number_verified` claims."""
+    customData = "custom_data"
+    """
+    The scope for the custom data. It maps to the `custom_data` claim.
+
+    Note that the custom data is not included in the ID token by default. You need to
+    use `fetchUserInfo()` to get the custom data.
+    """
+    identities = "identities"
+    """
+    The scope for the identities. It maps to the `identities` claim.
+
+    Note that the identities are not included in the ID token by default. You need to
+    use `fetchUserInfo()` to get the identities.
+    """
+
+
 class IdTokenClaims(BaseModel):
     """
     The ID token claims object.
@@ -59,34 +93,33 @@ class IdTokenClaims(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     iss: str
-    """
-    The issuer identifier for whom issued the token.
-    """
+    """The issuer identifier for whom issued the token."""
     sub: str
-    """
-    The subject identifier for whom the token is intended (user ID).
-    """
+    """The subject identifier for whom the token is intended (user ID)."""
     aud: str
     """
     The audience that the token is intended for, which is the client ID or the resource
     indicator.
     """
     exp: int
-    """
-    The expiration time of the token (in seconds).
-    """
+    """The expiration time of the token (in seconds)."""
     iat: int
-    """
-    The time at which the token was issued (in seconds).
-    """
+    """The time at which the token was issued (in seconds)."""
     at_hash: Optional[str] = None
     name: Optional[str] = None
+    """The user's full name."""
     username: Optional[str] = None
+    """The user's username."""
     picture: Optional[str] = None
+    """The user's profile picture URL."""
     email: Optional[str] = None
+    """The user's email address."""
     email_verified: Optional[bool] = None
+    """Whether the user's email address is verified."""
     phone_number: Optional[str] = None
+    """The user's phone number."""
     phone_number_verified: Optional[bool] = None
+    """Whether the user's phone number is verified."""
 
 
 class AccessTokenClaims(BaseModel):

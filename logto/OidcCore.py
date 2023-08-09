@@ -12,13 +12,23 @@ import jwt
 from typing import List, Optional
 
 from .LogtoException import LogtoException
-from .models.oidc import AccessTokenClaims, IdTokenClaims, OidcProviderMetadata
+from .models.oidc import (
+    AccessTokenClaims,
+    IdTokenClaims,
+    OAuthScope,
+    OidcProviderMetadata,
+    UserInfoScope,
+)
 from .models.response import TokenResponse, UserInfoResponse
 from .utilities import removeFalsyKeys, urlsafeEncode
 
 
 class OidcCore:
-    defaultScopes: List[str] = ["openid", "offline_access", "profile"]
+    defaultScopes: List[str] = [
+        UserInfoScope.openid,
+        OAuthScope.offlineAccess,
+        UserInfoScope.profile,
+    ]
 
     def __init__(self, metadata: OidcProviderMetadata) -> None:
         """

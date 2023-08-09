@@ -17,8 +17,10 @@ This tutorial will show you how to integrate Logto into your Python web applicat
     - [Implement the home page](#implement-the-home-page)
     - [Implement the sign-out route](#implement-the-sign-out-route)
     - [Checkpoint: Test your application](#checkpoint-test-your-application)
+  - [Protect your routes](#protect-your-routes)
   - [Scopes and claims](#scopes-and-claims)
-  - [Resources](#resources)
+    - [Special ID token claims](#special-id-token-claims)
+  - [API resources](#api-resources)
 
 ## Integration
 
@@ -139,14 +141,110 @@ Now, you can test your application:
 3. After you sign in, you should be redirected back to `https://your-app.com/`, and you should see your user info and a "Sign out" button.
 4. Click the "Sign out" button, and you should be redirected back to `https://your-app.com/`, and you should see a "Not authenticated" message with a "Sign in" button.
 
+## Protect your routes
+
+Now, you have a working sign-in flow, but your routes are still unprotected. Per the framework you use, you can create a decorator such as `@authenticated` to protect your routes. For example:
+
+```python
+def authenticated(func):
+    @wraps(func)
+    async def wrapper(*args, **kwargs):
+        if client.isAuthenticated() is False:
+            return redirect("/sign-in") # Or directly call `client.signIn`
+        return await func(*args, **kwargs)
+
+    return wrapper
+```
+
+Then, you can use the decorator to protect your routes:
+
+```python
+@app.route("/protected")
+@authenticated
+async def protected():
+    return "Protected page"
+```
+
+You can also create a middleware to achieve the same goal.
+
 ## Scopes and claims
 
 Both of "scope" and "claim" are terms from the OAuth 2.0 and OpenID Connect (OIDC) specifications. In OIDC, there are some optional [scopes and claims conventions](https://openid.net/specs/openid-connect-core-1_0.html#Claims) to follow. Logto uses these conventions to define the scopes and claims for the ID token.
 
 In short, when you request a scope, you will get the corresponding claims in the ID token. For example, if you request the `email` scope, you will get the `email` and `email_verified` claims in the ID token.
 
-By default, Logto SDK requests `openid`, `profile`, ...
+By default, Logto SDK requests three scopes: `openid`, `profile`, and `offline_access`. You can add more scopes when configuring the Logto client:
 
-For types ...
+```python
+client = LogtoClient(
+    LogtoConfig(
+        # ...other configs
+        scopes=["email", "phone"], # Add more scopes
+    ),
+)
+```
 
-## Resources
+> **Note**
+> For now, there's no way to remove the default scopes without mutating the `scopes` list.
+
+See [UserInfoScope](./api.md#logto.models.oidc.UserInfoScope) for a list of supported scopes and its mapped claims.
+
+### Special ID token claims
+
+Considering performance and the data size, Logto doesn't include all the claims in the ID token, such as `custom_data` which could be a large JSON object. To fetch these claims, you can use the `fetchUserInfo` method:
+
+```python
+(await client.fetchUserInfo()).custom_data # Get the custom_data claim
+```
+
+See [UserInfoScope](./api.md#logto.models.oidc.UserInfoScope) for details.
+
+## API resources
+
+We recommend to read [🔐 Role-Based Access Control (RBAC)](https://docs.logto.io/docs/recipes/rbac/) first to understand the basic concepts of Logto RBAC and how to set up API resources properly.
+
+Once you have set up the API resources, you can add them when configuring the Logto client:
+
+```python
+client = LogtoClient(
+    LogtoConfig(
+        # ...other configs
+        resources=["https://shopping.your-app.com/api", "https://store.your-app.com/api"], # Add API resources
+    ),
+)
+```
+
+Each API resource has its own permissions (scopes). For example, the `https://shopping.your-app.com/api` resource has the `shopping:read` and `shopping:write` permissions, and the `https://store.your-app.com/api` resource has the `store:read` and `store:write` permissions.
+
+To request these permissions, you can add them when configuring the Logto client:
+
+```python
+client = LogtoClient(
+    LogtoConfig(
+        # ...other configs
+        scopes=["shopping:read", "shopping:write", "store:read", "store:write"],
+        resources=["https://shopping.your-app.com/api", "https://store.your-app.com/api"],
+    ),
+)
+```
+
+You may notice that scopes are defined separately from API resources. This is because [Resource Indicators for OAuth 2.0](https://www.rfc-editor.org/rfc/rfc8707.html) specifies the final scopes for the request will be the cartesian product of all the scopes at all the target services.
+
+Thus, in the above case, scopes can be simplified from the definition in Logto, both of the API resources can have `read` and `write` scopes without the prefix. Then, in the Logto config:
+
+```python
+client = LogtoClient(
+    LogtoConfig(
+        # ...other configs
+        scopes=["read", "write"],
+        resources=["https://shopping.your-app.com/api", "https://store.your-app.com/api"],
+    ),
+)
+```
+
+For every API resource, it will request for both `read` and `write` scopes.
+
+> **Note**
+> It is fine to request scopes that are not defined in the API resources. For example, you can request the `email` scope even if the API resources don't have the `email` scope available. Unavailable scopes will be safely ignored.
+
+After the successful sign-in, Logto will issue proper scopes to every API resource according to the user's roles.

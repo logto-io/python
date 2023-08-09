@@ -5,6 +5,7 @@
   * [LogtoException](#logto.LogtoException.LogtoException)
 * [logto.models.oidc](#logto.models.oidc)
   * [OidcProviderMetadata](#logto.models.oidc.OidcProviderMetadata)
+  * [UserInfoScope](#logto.models.oidc.UserInfoScope)
   * [IdTokenClaims](#logto.models.oidc.IdTokenClaims)
   * [AccessTokenClaims](#logto.models.oidc.AccessTokenClaims)
 * [logto.models.response](#logto.models.response)
@@ -69,6 +70,58 @@ See https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata
 
 This is actually "RECOMMENDED" but Logto requires it
 
+<a id="logto.models.oidc.UserInfoScope"></a>
+
+## UserInfoScope
+
+```python
+class UserInfoScope(Enum)
+```
+
+The available scopes for the userinfo endpoint and the ID token claims.
+
+<a id="logto.models.oidc.UserInfoScope.openid"></a>
+
+#### openid
+
+The preserved scope for OpenID Connect. It maps to the `sub` claim.
+
+<a id="logto.models.oidc.UserInfoScope.profile"></a>
+
+#### profile
+
+The scope for the basic profile. It maps to the `name`, `username`, `picture` claims.
+
+<a id="logto.models.oidc.UserInfoScope.email"></a>
+
+#### email
+
+The scope for the email address. It maps to the `email`, `email_verified` claims.
+
+<a id="logto.models.oidc.UserInfoScope.phone"></a>
+
+#### phone
+
+The scope for the phone number. It maps to the `phone_number`, `phone_number_verified` claims.
+
+<a id="logto.models.oidc.UserInfoScope.customData"></a>
+
+#### customData
+
+The scope for the custom data. It maps to the `custom_data` claim.
+
+Note that the custom data is not included in the ID token by default. You need to
+use `fetchUserInfo()` to get the custom data.
+
+<a id="logto.models.oidc.UserInfoScope.identities"></a>
+
+#### identities
+
+The scope for the identities. It maps to the `identities` claim.
+
+Note that the identities are not included in the ID token by default. You need to
+use `fetchUserInfo()` to get the identities.
+
 <a id="logto.models.oidc.IdTokenClaims"></a>
 
 ## IdTokenClaims
@@ -112,6 +165,48 @@ The expiration time of the token (in seconds).
 #### iat
 
 The time at which the token was issued (in seconds).
+
+<a id="logto.models.oidc.IdTokenClaims.name"></a>
+
+#### name
+
+The user's full name.
+
+<a id="logto.models.oidc.IdTokenClaims.username"></a>
+
+#### username
+
+The user's username.
+
+<a id="logto.models.oidc.IdTokenClaims.picture"></a>
+
+#### picture
+
+The user's profile picture URL.
+
+<a id="logto.models.oidc.IdTokenClaims.email"></a>
+
+#### email
+
+The user's email address.
+
+<a id="logto.models.oidc.IdTokenClaims.email_verified"></a>
+
+#### email\_verified
+
+Whether the user's email address is verified.
+
+<a id="logto.models.oidc.IdTokenClaims.phone_number"></a>
+
+#### phone\_number
+
+The user's phone number.
+
+<a id="logto.models.oidc.IdTokenClaims.phone_number_verified"></a>
+
+#### phone\_number\_verified
+
+Whether the user's phone number is verified.
 
 <a id="logto.models.oidc.AccessTokenClaims"></a>
 
