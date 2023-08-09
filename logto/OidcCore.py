@@ -1,18 +1,35 @@
+"""
+The core OIDC functions for the Logto client. Provider-agonistic functions
+are implemented as static methods, while other functions are implemented as
+instance methods.
+"""
+
 import hashlib
 import secrets
 import aiohttp
 from jwt import PyJWKClient
 import jwt
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from .LogtoException import LogtoException
-from .models.oidc import AccessTokenClaims, IdTokenClaims, OidcProviderMetadata
+from .models.oidc import (
+    AccessTokenClaims,
+    IdTokenClaims,
+    OAuthScope,
+    OidcProviderMetadata,
+    Scope,
+    UserInfoScope,
+)
 from .models.response import TokenResponse, UserInfoResponse
 from .utilities import removeFalsyKeys, urlsafeEncode
 
 
 class OidcCore:
-    defaultScopes: List[str] = ["openid", "offline_access", "profile"]
+    defaultScopes: List[Scope] = [
+        UserInfoScope.openid,
+        OAuthScope.offlineAccess,
+        UserInfoScope.profile,
+    ]
 
     def __init__(self, metadata: OidcProviderMetadata) -> None:
         """

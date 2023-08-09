@@ -5,6 +5,10 @@ description = "Logto Python SDK."
 authors = ["Silverhand Inc. <contact@silverhand.io>"]
 license = "MIT"
 readme = "README.md"
+homepage = "https://logto.io/"
+repository = "https://github.com/logto-io/python"
+documentation = "https://github.com/logto-io/python/tree/master/docs"
+keywords = ["logto", "auth", "user", "authentication", "authorization"]
 
 [tool.poetry.dependencies]
 python = "^3.8"
@@ -20,11 +24,13 @@ python-dotenv = "^1.0.0"
 black = "^23.7.0"
 pytest-mock = "^3.11.1"
 pytest-asyncio = "^0.21.1"
+pydoc-markdown = "^4.8.2"
 
 [tool.poe.tasks] # Install poethepoet as a poetry plugin to enable the `poetry poe *` command.
 test = { cmd = "pytest --cov --cov-report=term-missing" }
 flask = { cmd = "flask --app samples.flask --debug run" }
 black = { cmd = "black" }
+doc = { cmd = "pydoc-markdown" }
 
 [build-system]
 requires = ["poetry-core"]
@@ -37,3 +43,20 @@ source = ["logto"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+
+[tool.pydoc-markdown]
+
+[[tool.pydoc-markdown.loaders]]
+type = "python"
+
+[tool.pydoc-markdown.renderer]
+filename = "docs/api.md"
+type = "markdown"
+descriptive_class_title = false
+render_toc = true
+toc_maxdepth = 1
+render_toc_title = "Logto Python SDK API reference"
+
+[[tool.pydoc-markdown.processors]]
+type = "filter"
+expression = "not name.endswith('_test') and default()"

@@ -1,7 +1,6 @@
 from typing import Any, Dict, Optional
 from pytest_mock import MockerFixture
 
-from logto.Storage import Storage
 from logto.models.oidc import OidcProviderMetadata
 
 
@@ -49,17 +48,3 @@ mockProviderMetadata = OidcProviderMetadata(
     subject_types_supported=[],
     id_token_signing_alg_values_supported=[],
 )
-
-
-class MockStorage(Storage):
-    def __init__(self) -> None:
-        self._data: Dict[str, str] = {}
-
-    def get(self, key: str) -> Optional[str]:
-        return self._data.get(key, None)
-
-    def set(self, key: str, value: Optional[str]) -> None:
-        self._data[key] = value
-
-    def delete(self, key: str) -> None:
-        self._data.pop(key, None)

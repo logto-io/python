@@ -56,12 +56,18 @@ async def index():
 
 @app.route("/sign-in")
 async def sign_in():
-    return redirect(await client.signIn("http://127.0.0.1:5000/callback", "signUp"))
+    return redirect(
+        await client.signIn(
+            redirectUri="http://127.0.0.1:5000/callback", interactionMode="signUp"
+        )
+    )
 
 
 @app.route("/sign-out")
 async def sign_out():
-    return redirect(await client.signOut("http://127.0.0.1:5000/"))
+    return redirect(
+        await client.signOut(postLogoutRedirectUri="http://127.0.0.1:5000/")
+    )
 
 
 @app.route("/callback")
