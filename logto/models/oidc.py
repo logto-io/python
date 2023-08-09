@@ -60,25 +60,25 @@ class IdTokenClaims(BaseModel):
 
     iss: str
     """
-  The issuer identifier for whom issued the token.
-  """
+    The issuer identifier for whom issued the token.
+    """
     sub: str
     """
-  The subject identifier for whom the token is intended (user ID).
-  """
+    The subject identifier for whom the token is intended (user ID).
+    """
     aud: str
     """
-  The audience that the token is intended for, which is the client ID or the resource
-  indicator.
-  """
+    The audience that the token is intended for, which is the client ID or the resource
+    indicator.
+    """
     exp: int
     """
-  The expiration time of the token (in seconds).
-  """
+    The expiration time of the token (in seconds).
+    """
     iat: int
     """
-  The time at which the token was issued (in seconds).
-  """
+    The time at which the token was issued (in seconds).
+    """
     at_hash: Optional[str] = None
     name: Optional[str] = None
     username: Optional[str] = None
@@ -101,31 +101,31 @@ class AccessTokenClaims(BaseModel):
 
     iss: str
     """
-  The issuer identifier for whom issued the token.
-  """
+    The issuer identifier for whom issued the token.
+    """
     sub: str
     """
-  The subject identifier for whom the token is intended (user ID).
-  """
+    The subject identifier for whom the token is intended (user ID).
+    """
     aud: str
     """
-  The audience that the token is intended for, which is the client ID or the resource
-  indicator.
-  """
+    The audience that the token is intended for, which is the client ID or the resource
+    indicator.
+    """
     exp: int
     """
-  The expiration time of the token (in seconds).
-  """
+    The expiration time of the token (in seconds).
+    """
     iat: int
     """
-  The time at which the token was issued (in seconds).
-  """
+    The time at which the token was issued (in seconds).
+    """
     scope: str
     """
-  The scopes that the token is granted for.
-  """
+    The scopes that the token is granted for.
+    """
     client_id: Optional[str] = None
     """
-  The client ID that the token is granted for. Useful when the client ID is not
-  included in the `aud` claim.
-  """
+    The client ID that the token is granted for. Useful when the client ID is not
+    included in the `aud` claim.
+    """

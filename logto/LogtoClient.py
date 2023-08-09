@@ -1,9 +1,13 @@
+"""
+The Logto client class and the related models.
+"""
+
 import time
 from typing import Dict, List, Literal, Optional
 from pydantic import BaseModel
 import urllib.parse
 
-from .Storage import Storage
+from .Storage import MemoryStorage, Storage
 from .LogtoException import LogtoException
 from .OidcCore import (
     AccessTokenClaims,
@@ -22,77 +26,91 @@ class LogtoConfig(BaseModel):
 
     endpoint: str
     """
-  The endpoint for the Logto server, you can get it from the integration guide
-  or the team settings page of the Logto Console.
+    The endpoint for the Logto server, you can get it from the integration guide
+    or the team settings page of the Logto Console.
 
-  Example:
+    Example:
     https://foo.logto.app
-  """
+    """
 
     appId: str
     """
-  The client ID of your application, you can get it from the integration guide
-  or the application details page of the Logto Console.
-  """
+    The client ID of your application, you can get it from the integration guide
+    or the application details page of the Logto Console.
+    """
 
     appSecret: Optional[str] = None
     """
-  The client secret of your application, you can get it from the integration guide
-  or the application details page of the Logto Console.
-  """
+    The client secret of your application, you can get it from the integration guide
+    or the application details page of the Logto Console.
+    """
 
     prompt: Literal["consent", "login"] = "consent"
     """
-  The prompt parameter for the OpenID Connect authorization request.
+    The prompt parameter for the OpenID Connect authorization request.
 
-  - If the value is `consent`, the user will be able to reuse the existing consent
-  without being prompted for sign-in again.
-  - If the value is `login`, the user will be prompted for sign-in again anyway. Note
-  there will be no Refresh Token returned in this case.
-  """
+    - If the value is `consent`, the user will be able to reuse the existing consent
+    without being prompted for sign-in again.
+    - If the value is `login`, the user will be prompted for sign-in again anyway. Note
+    there will be no Refresh Token returned in this case.
+    """
 
     resources: List[str] = []
     """
-  The API resources that your application needs to access. You can specify multiple
-  resources by providing an array of strings.
+    The API resources that your application needs to access. You can specify multiple
+    resources by providing an array of strings.
 
-  See https://docs.logto.io/docs/recipes/rbac/ to learn more about how to use role-based
-  access control (RBAC) to protect API resources.
-  """
+    See https://docs.logto.io/docs/recipes/rbac/ to learn more about how to use role-based
+    access control (RBAC) to protect API resources.
+    """
 
     scopes: List[str] = []
     """
-  The scopes (permissions) that your application needs to access.
-  Scopes that will be added by default: `openid`, `offline_access` and `profile`.
+    The scopes (permissions) that your application needs to access.
+    Scopes that will be added by default: `openid`, `offline_access` and `profile`.
 
-  If resources are specified, scopes will be applied to every resource.
+    If resources are specified, scopes will be applied to every resource.
 
-  See https://docs.logto.io/docs/recipes/integrate-logto/vanilla-js/#fetch-user-information
-  for more information of available scopes for user information.
-  """
+    See https://docs.logto.io/docs/recipes/integrate-logto/vanilla-js/#fetch-user-information
+    for more information of available scopes for user information.
+    """
 
 
 class SignInSession(BaseModel):
+    """
+    The sign-in session that stores the information for the sign-in callback.
+    Should be stored before redirecting the user to Logto.
+    """
+
     redirectUri: str
+    """
+    The redirect URI for the current sign-in session.
+    """
     codeVerifier: str
+    """
+    The code verifier of Proof Key for Code Exchange (PKCE).
+    """
     state: str
+    """
+    The state for OAuth 2.0 authorization request.
+    """
 
 
 class AccessToken(BaseModel):
     """
-    The access token for a resource.
+    The access token class for a resource.
     """
 
     token: str
     """
-  The access token.
-  """
+    The access token.
+    """
     expiresAt: int
     """
-  The timestamp (in seconds) when the access token will expire.
-  Note this is not the expiration time of the access token itself, but the
-  expiration time of the access token cache.
-  """
+    The timestamp (in seconds) when the access token will expire.
+    Note this is not the expiration time of the access token itself, but the
+    expiration time of the access token cache.
+    """
 
 
 class AccessTokenMap(BaseModel):
@@ -106,11 +124,24 @@ class AccessTokenMap(BaseModel):
     x: Dict[str, AccessToken]
 
 
-PersistKey = Literal["idToken", "accessTokenMap", "refreshToken", "signInSession"]
 InteractionMode = Literal["signIn", "signUp"]
+"""
+The interaction mode for the sign-in request. Note this is not a part of the OIDC
+specification, but a Logto extension.
+"""
 
 
 class LogtoClient:
+    """
+    The main class of the Logto client. You should create an instance of this class
+    and use it to sign in, sign out, get access token, etc.
+    """
+
+    def __init__(self, config: LogtoConfig, storage: Storage = MemoryStorage()) -> None:
+        self.config = config
+        self._oidcCore: Optional[OidcCore] = None
+        self._storage = storage
+
     async def getOidcCore(self) -> OidcCore:
         """
         Get the OIDC core object. You can use it to get the provider metadata, verify
@@ -123,11 +154,6 @@ class LogtoClient:
                 )
             )
         return self._oidcCore
-
-    def __init__(self, config: LogtoConfig, storage: Storage) -> None:
-        self.config = config
-        self._oidcCore: Optional[OidcCore] = None
-        self._storage = storage
 
     def _getAccessTokenMap(self) -> AccessTokenMap:
         """

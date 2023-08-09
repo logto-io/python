@@ -1,3 +1,9 @@
+"""
+The core OIDC functions for the Logto client. Provider-agonistic functions
+are implemented as static methods, while other functions are implemented as
+instance methods.
+"""
+
 import hashlib
 import secrets
 import aiohttp
