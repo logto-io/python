@@ -46,7 +46,7 @@ asyncio_mode = "auto"
 type = "python"
 
 [tool.pydoc-markdown.renderer]
-filename = "docs/API.md"
+filename = "docs/api.md"
 type = "markdown"
 descriptive_class_title = false
 render_toc = true
