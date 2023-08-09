@@ -5,7 +5,7 @@ import pytest
 from . import LogtoClient, LogtoConfig, LogtoException, Storage
 from .utilities.test import MockStorage, mockHttp, mockProviderMetadata
 from .models.response import TokenResponse, UserInfoResponse
-from .models.oidc import IdTokenClaims, AccessTokenClaims, OidcProviderMetadata
+from .models.oidc import IdTokenClaims, AccessTokenClaims
 from .OidcCore import OidcCore
 
 MockRequest = Callable[..., None]
@@ -188,8 +188,7 @@ class TestLogtoClient:
         )
 
         # Mock getOidcCore()
-        mocker.patch(
-            "logto.LogtoClient.LogtoClient.getOidcCore",
+        client.getOidcCore = mocker.AsyncMock(
             return_value=OidcCore(mockProviderMetadata),
         )
 
@@ -205,7 +204,7 @@ class TestLogtoClient:
         mockRequest(method="post", json=tokenResponse.__dict__)
 
         # Mock verifyIdToken()
-        mocker.patch("logto.LogtoClient.OidcCore.verifyIdToken", return_value=None)
+        mocker.patch("logto.OidcCore.OidcCore.verifyIdToken", return_value=None)
 
         # Should not raise
         await client.handleSignInCallback(
@@ -332,12 +331,9 @@ class TestLogtoClient:
         async def mockFetchUserInfo(accessToken: str) -> UserInfoResponse:
             return userinfoResponse
 
+        client.getAccessToken = mocker.AsyncMock(return_value="accessToken")
         mocker.patch(
-            "logto.LogtoClient.LogtoClient.getAccessToken",
-            return_value="accessToken",
-        )
-        mocker.patch(
-            "logto.LogtoClient.OidcCore.fetchUserInfo",
+            "logto.OidcCore.OidcCore.fetchUserInfo",
             side_effect=mockFetchUserInfo,
         )
 
