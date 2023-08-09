@@ -49,11 +49,17 @@ class OidcProviderMetadata(BaseModel):
     code_challenge_methods_supported: List[str] = []
 
 
-class OAuthScope(Enum):
+class Scope(Enum):
+    """The scope base class for determining the scope type."""
+
+    pass
+
+
+class OAuthScope(Scope):
     offlineAccess = "offline_access"
 
 
-class UserInfoScope(Enum):
+class UserInfoScope(Scope):
     """
     The available scopes for the userinfo endpoint and the ID token claims.
     """

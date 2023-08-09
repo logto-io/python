@@ -10,6 +10,8 @@ from .models.oidc import (
     AccessTokenClaims as AccessTokenClaims,
     IdTokenClaims as IdTokenClaims,
     OidcProviderMetadata as OidcProviderMetadata,
+    Scope as Scope,
+    UserInfoScope as UserInfoScope,
 )
 from .models.response import (
     TokenResponse as TokenResponse,

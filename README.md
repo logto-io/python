@@ -33,6 +33,10 @@ See [samples](./samples/) directory for example usages.
 
 ## Resources
 
+- [Logto website](https://logto.io/)
+- [Logto Documentation](https://docs.logto.io/)
+- [Join Discord](https://discord.gg/vRvwuwgpVX)
+
 [PyPI]: https://pypi.org/project/logto/
 [PyPI Releases]: https://pypi.org/project/logto/#history
 [Discord]: https://discord.gg/vRvwuwgpVX

@@ -5,7 +5,7 @@ import pytest
 from . import LogtoClient, LogtoConfig, LogtoException, Storage
 from .utilities.test import mockHttp, mockProviderMetadata
 from .models.response import TokenResponse, UserInfoResponse
-from .models.oidc import IdTokenClaims, AccessTokenClaims
+from .models.oidc import IdTokenClaims, AccessTokenClaims, UserInfoScope
 from .Storage import MemoryStorage, Storage
 from .OidcCore import OidcCore
 
@@ -76,7 +76,7 @@ class TestLogtoClient:
         )
 
     async def test_signIn_multipleScopes(self, client: LogtoClient) -> None:
-        client.config.scopes = ["email", "phone"]
+        client.config.scopes = [UserInfoScope.email, "phone"]
         url = await client.signIn("redirectUri")
 
         assert (

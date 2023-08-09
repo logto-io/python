@@ -38,6 +38,31 @@ client = LogtoClient(
 )
 ```
 
+Also replace the default memory storage with a persistent storage, for example:
+
+```python
+from logto import LogtoClient, LogtoConfig, Storage
+from flask import session
+
+class SessionStorage(Storage):
+    def get(self, key: str) -> str | None:
+        return session.get(key, None)
+
+    def set(self, key: str, value: str | None) -> None:
+        session[key] = value
+
+    def delete(self, key: str) -> None:
+        session.pop(key, None)
+
+client = LogtoClient(
+    LogtoConfig(...),
+    storage=SessionStorage(),
+)
+```
+
+See [Storage](./api.md#logto.Storage.Storage) for more details.
+
+
 ### Implement the sign-in route
 
 In your web application, add a route to properly handle the sign-in request from users. Let's use `/sign-in` as an example:
@@ -180,6 +205,15 @@ client = LogtoClient(
     LogtoConfig(
         # ...other configs
         scopes=["email", "phone"], # Add more scopes
+    ),
+)
+
+# or
+
+client = LogtoClient(
+    LogtoConfig(
+        # ...other configs
+        scopes=[UserInfoScope.email, UserInfoScope.profile], # Same result
     ),
 )
 ```

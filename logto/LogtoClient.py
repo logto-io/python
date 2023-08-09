@@ -3,9 +3,11 @@ The Logto client class and the related models.
 """
 
 import time
-from typing import Dict, List, Literal, Optional
+from typing import Dict, List, Literal, Optional, Union
 from pydantic import BaseModel
 import urllib.parse
+
+from logto.models.oidc import Scope
 
 from .Storage import MemoryStorage, Storage
 from .LogtoException import LogtoException
@@ -64,7 +66,7 @@ class LogtoConfig(BaseModel):
     access control (RBAC) to protect API resources.
     """
 
-    scopes: List[str] = []
+    scopes: List[Union[str, Scope]] = []
     """
     The scopes (permissions) that your application needs to access.
     Scopes that will be added by default: `openid`, `offline_access` and `profile`.
@@ -233,7 +235,10 @@ class LogtoClient:
                     "client_id": appId,
                     "redirect_uri": redirectUri,
                     "response_type": "code",
-                    "scope": " ".join(scopes + OidcCore.defaultScopes),
+                    "scope": " ".join(
+                        (item.value if isinstance(item, Scope) else item)
+                        for item in (scopes + OidcCore.defaultScopes)
+                    ),
                     "resource": resources,
                     "prompt": prompt,
                     "code_challenge": codeChallenge,

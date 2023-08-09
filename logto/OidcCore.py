@@ -9,7 +9,7 @@ import secrets
 import aiohttp
 from jwt import PyJWKClient
 import jwt
-from typing import List, Optional
+from typing import List, Optional, Union
 
 from .LogtoException import LogtoException
 from .models.oidc import (
@@ -17,6 +17,7 @@ from .models.oidc import (
     IdTokenClaims,
     OAuthScope,
     OidcProviderMetadata,
+    Scope,
     UserInfoScope,
 )
 from .models.response import TokenResponse, UserInfoResponse
@@ -24,7 +25,7 @@ from .utilities import removeFalsyKeys, urlsafeEncode
 
 
 class OidcCore:
-    defaultScopes: List[str] = [
+    defaultScopes: List[Scope] = [
         UserInfoScope.openid,
         OAuthScope.offlineAccess,
         UserInfoScope.profile,

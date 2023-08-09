@@ -7,7 +7,7 @@ license = "MIT"
 readme = "README.md"
 homepage = "https://logto.io/"
 repository = "https://github.com/logto-io/python"
-documentation = "https://github.com/logto-io/python"
+documentation = "https://github.com/logto-io/python/tree/master/docs"
 keywords = ["logto", "auth", "user", "authentication", "authorization"]
 
 [tool.poetry.dependencies]
