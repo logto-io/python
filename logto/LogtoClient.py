@@ -1,5 +1,5 @@
 import time
-from typing import Dict, Literal, Optional
+from typing import Dict, List, Literal, Optional
 from pydantic import BaseModel
 import urllib.parse
 
@@ -51,7 +51,7 @@ class LogtoConfig(BaseModel):
   there will be no Refresh Token returned in this case.
   """
 
-    resources: list[str] = []
+    resources: List[str] = []
     """
   The API resources that your application needs to access. You can specify multiple
   resources by providing an array of strings.
@@ -60,7 +60,7 @@ class LogtoConfig(BaseModel):
   access control (RBAC) to protect API resources.
   """
 
-    scopes: list[str] = []
+    scopes: List[str] = []
     """
   The scopes (permissions) that your application needs to access.
   Scopes that will be added by default: `openid`, `offline_access` and `profile`.
@@ -126,7 +126,7 @@ class LogtoClient:
 
     def __init__(self, config: LogtoConfig, storage: Storage) -> None:
         self.config = config
-        self._oidcCore: OidcCore | None = None
+        self._oidcCore: Optional[OidcCore] = None
         self._storage = storage
 
     def _getAccessTokenMap(self) -> AccessTokenMap:
@@ -152,7 +152,7 @@ class LogtoClient:
         )
         self._storage.set("accessTokenMap", accessTokenMap.model_dump_json())
 
-    def _getAccessToken(self, resource: str) -> str | None:
+    def _getAccessToken(self, resource: str) -> Optional[str]:
         """
         Get the valid access token for the given resource from storage, no refresh will be
         performed.
@@ -190,7 +190,7 @@ class LogtoClient:
         redirectUri: str,
         codeChallenge: str,
         state: str,
-        interactionMode: InteractionMode | None = None,
+        interactionMode: Optional[InteractionMode] = None,
     ) -> str:
         appId, prompt, resources, scopes = (
             self.config.appId,
@@ -237,7 +237,7 @@ class LogtoClient:
         self._storage.set("signInSession", signInSession.model_dump_json())
 
     async def signIn(
-        self, redirectUri: str, interactionMode: InteractionMode | None = None
+        self, redirectUri: str, interactionMode: Optional[InteractionMode] = None
     ) -> str:
         """
         Returns the sign-in URL for the given redirect URI. You should redirect the user
@@ -271,7 +271,7 @@ class LogtoClient:
 
         return signInUrl
 
-    async def signOut(self, postLogoutRedirectUri: str | None = None) -> str:
+    async def signOut(self, postLogoutRedirectUri: Optional[str] = None) -> str:
         """
         Returns the sign-out URL for the given post-logout redirect URI. You should
         redirect the user to the returned URL to sign out.
@@ -357,7 +357,7 @@ class LogtoClient:
         await self._handleTokenResponse("", tokenResponse)
         self._storage.delete("signInSession")
 
-    async def getAccessToken(self, resource: str = "") -> str | None:
+    async def getAccessToken(self, resource: str = "") -> Optional[str]:
         """
         Get the access token for the given resource. If the access token is expired,
         it will be refreshed automatically. If no refresh token is found, None will
@@ -390,7 +390,7 @@ class LogtoClient:
         accessToken = await self.getAccessToken(resource)
         return OidcCore.decodeAccessToken(accessToken)
 
-    def getIdToken(self) -> str | None:
+    def getIdToken(self) -> Optional[str]:
         """
         Get the ID Token string. If you need to get the claims in the ID Token, use
         `getIdTokenClaims` instead.
@@ -408,7 +408,7 @@ class LogtoClient:
 
         return OidcCore.decodeIdToken(idToken)
 
-    def getRefreshToken(self) -> str | None:
+    def getRefreshToken(self) -> Optional[str]:
         """
         Get the refresh token string.
         """

@@ -1,8 +1,9 @@
 import hashlib
+import secrets
 import aiohttp
-import random
 from jwt import PyJWKClient
 import jwt
+from typing import List, Optional
 
 from .LogtoException import LogtoException
 from .models.oidc import AccessTokenClaims, IdTokenClaims, OidcProviderMetadata
@@ -11,7 +12,7 @@ from .utilities import removeFalsyKeys, urlsafeEncode
 
 
 class OidcCore:
-    defaultScopes: list[str] = ["openid", "offline_access", "profile"]
+    defaultScopes: List[str] = ["openid", "offline_access", "profile"]
 
     def __init__(self, metadata: OidcProviderMetadata) -> None:
         """
@@ -28,7 +29,7 @@ class OidcCore:
         """
         Generate a random string (32 bytes) for the state parameter.
         """
-        return urlsafeEncode(random.randbytes(32))
+        return urlsafeEncode(secrets.token_bytes(32))
 
     def generateCodeVerifier() -> str:
         """
@@ -36,7 +37,7 @@ class OidcCore:
 
         See: https://www.rfc-editor.org/rfc/rfc7636.html#section-4.1
         """
-        return urlsafeEncode(random.randbytes(32))
+        return urlsafeEncode(secrets.token_bytes(32))
 
     def generateCodeChallenge(codeVerifier: str) -> str:
         """
@@ -72,7 +73,7 @@ class OidcCore:
     async def fetchTokenByCode(
         self,
         clientId: str,
-        clientSecret: str | None,
+        clientSecret: Optional[str],
         redirectUri: str,
         code: str,
         codeVerifier: str,
@@ -102,7 +103,7 @@ class OidcCore:
     async def fetchTokenByRefreshToken(
         self,
         clientId: str,
-        clientSecret: str | None,
+        clientSecret: Optional[str],
         refreshToken: str,
         resource: str = "",
     ) -> TokenResponse:

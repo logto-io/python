@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 from pytest_mock import MockerFixture
 
 from logto.Storage import Storage
@@ -7,7 +7,7 @@ from logto.models.oidc import OidcProviderMetadata
 
 class MockResponse:
     def __init__(
-        self, json: Dict[str, Any] | None, text: str | None, status: int
+        self, json: Optional[Dict[str, Any]], text: Optional[str], status: int
     ) -> None:
         self._json = json
         self._text = text or str(json)
@@ -29,8 +29,8 @@ class MockResponse:
 def mockHttp(
     mocker: MockerFixture,
     method: str,
-    json: Dict[str, Any] | None,
-    text: str | None,
+    json: Optional[Dict[str, Any]],
+    text: Optional[str],
     status=200,
 ):
     mocker.patch(
@@ -55,10 +55,10 @@ class MockStorage(Storage):
     def __init__(self) -> None:
         self._data: Dict[str, str] = {}
 
-    def get(self, key: str) -> str | None:
+    def get(self, key: str) -> Optional[str]:
         return self._data.get(key, None)
 
-    def set(self, key: str, value: str | None) -> None:
+    def set(self, key: str, value: Optional[str]) -> None:
         self._data[key] = value
 
     def delete(self, key: str) -> None:

@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import List, Optional
 from pydantic import BaseModel, ConfigDict
 
 
@@ -15,29 +15,29 @@ class OidcProviderMetadata(BaseModel):
     userinfo_endpoint: str  # This is actually "RECOMMENDED" but Logto requires it
     jwks_uri: str
     registration_endpoint: Optional[str] = None
-    scopes_supported: list[str] = []
-    response_types_supported: list[str]
-    response_modes_supported: list[str] = []
-    grant_types_supported: list[str] = []
-    acr_values_supported: list[str] = []
-    subject_types_supported: list[str]
-    id_token_signing_alg_values_supported: list[str]
-    id_token_encryption_alg_values_supported: list[str] = []
-    id_token_encryption_enc_values_supported: list[str] = []
-    userinfo_signing_alg_values_supported: list[str] = []
-    userinfo_encryption_alg_values_supported: list[str] = []
-    userinfo_encryption_enc_values_supported: list[str] = []
-    request_object_signing_alg_values_supported: list[str] = []
-    request_object_encryption_alg_values_supported: list[str] = []
-    request_object_encryption_enc_values_supported: list[str] = []
-    token_endpoint_auth_methods_supported: list[str] = []
-    token_endpoint_auth_signing_alg_values_supported: list[str] = []
-    display_values_supported: list[str] = []
-    claim_types_supported: list[str] = []
-    claims_supported: list[str] = []
+    scopes_supported: List[str] = []
+    response_types_supported: List[str]
+    response_modes_supported: List[str] = []
+    grant_types_supported: List[str] = []
+    acr_values_supported: List[str] = []
+    subject_types_supported: List[str]
+    id_token_signing_alg_values_supported: List[str]
+    id_token_encryption_alg_values_supported: List[str] = []
+    id_token_encryption_enc_values_supported: List[str] = []
+    userinfo_signing_alg_values_supported: List[str] = []
+    userinfo_encryption_alg_values_supported: List[str] = []
+    userinfo_encryption_enc_values_supported: List[str] = []
+    request_object_signing_alg_values_supported: List[str] = []
+    request_object_encryption_alg_values_supported: List[str] = []
+    request_object_encryption_enc_values_supported: List[str] = []
+    token_endpoint_auth_methods_supported: List[str] = []
+    token_endpoint_auth_signing_alg_values_supported: List[str] = []
+    display_values_supported: List[str] = []
+    claim_types_supported: List[str] = []
+    claims_supported: List[str] = []
     service_documentation: Optional[str] = None
-    claims_locales_supported: list[str] = []
-    ui_locales_supported: list[str] = []
+    claims_locales_supported: List[str] = []
+    ui_locales_supported: List[str] = []
     claims_parameter_supported: bool = False
     request_parameter_supported: bool = False
     request_uri_parameter_supported: bool = True
@@ -45,7 +45,7 @@ class OidcProviderMetadata(BaseModel):
     op_policy_uri: Optional[str] = None
     op_tos_uri: Optional[str] = None
     end_session_endpoint: Optional[str] = None
-    code_challenge_methods_supported: list[str] = []
+    code_challenge_methods_supported: List[str] = []
 
 
 class IdTokenClaims(BaseModel):

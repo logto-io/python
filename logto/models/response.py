@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, Optional, Dict
 from pydantic import BaseModel
 
 
@@ -12,7 +12,7 @@ class TokenResponse(BaseModel):
 
 class UserIdentity(BaseModel):
     userId: str
-    details: Optional[dict[str, Any]] = None
+    details: Optional[Dict[str, Any]] = None
 
 
 class UserInfoResponse(BaseModel):
@@ -25,4 +25,4 @@ class UserInfoResponse(BaseModel):
     phone_number: Optional[str] = None
     phone_number_verified: Optional[bool] = None
     custom_data: Any = None
-    identities: Optional[dict[str, UserIdentity]] = None
+    identities: Optional[Dict[str, UserIdentity]] = None

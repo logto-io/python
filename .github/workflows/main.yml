@@ -1,0 +1,37 @@
+name: Main
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  main:
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - uses: abatilo/actions-poetry@v2
+
+      - name: Install dependencies
+        run: |
+          # update lockfile to fix a pytest issue in python < 3.11
+          poetry lock
+          poetry install
+          poetry self add 'poethepoet[poetry_plugin]'
+
+      - name: Build
+        run: poetry build
+
+      - name: Run tests
+        run: poetry poe test
