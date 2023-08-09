@@ -34,7 +34,7 @@ See [samples](./samples/) directory for example usages.
 ## Resources
 
 - [Logto website](https://logto.io/)
-- [Logto Documentation](https://docs.logto.io/)
+- [Logto documentation](https://docs.logto.io/)
 - [Join Discord](https://discord.gg/vRvwuwgpVX)
 
 [PyPI]: https://pypi.org/project/logto/
