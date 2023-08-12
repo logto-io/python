@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "logto"
-version = "0.1.2"
+version = "0.1.3"
 description = "Logto Python SDK."
 authors = ["Silverhand Inc. <contact@silverhand.io>"]
 license = "MIT"

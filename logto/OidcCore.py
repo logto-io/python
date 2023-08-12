@@ -9,7 +9,7 @@ import secrets
 import aiohttp
 from jwt import PyJWKClient
 import jwt
-from typing import List, Optional, Union
+from typing import List, Optional
 
 from .LogtoException import LogtoException
 from .models.oidc import (
@@ -149,7 +149,8 @@ class OidcCore:
 
     def verifyIdToken(self, idToken: str, clientId: str) -> None:
         """
-        Verify the ID Token, throw an exception if the verification fails.
+        Verify the ID Token signature and its issuer and client ID, throw an exception
+        if the verification fails.
         """
         issuer = self.metadata.issuer
         signing_key = self.jwksClient.get_signing_key_from_jwt(idToken)
@@ -159,11 +160,14 @@ class OidcCore:
             algorithms=["RS256", "PS256", "ES256", "ES384", "ES512"],
             audience=clientId,
             issuer=issuer,
+            leeway=30,
         )
 
     async def fetchUserInfo(self, accessToken: str) -> UserInfoResponse:
         """
         Fetch the user info from the OpenID Connect UserInfo endpoint.
+
+        See: https://openid.net/specs/openid-connect-core-1_0.html#UserInfo
         """
         userInfoEndpoint = self.metadata.userinfo_endpoint
         async with aiohttp.ClientSession() as session:

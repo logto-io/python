@@ -10,6 +10,7 @@ This tutorial will show you how to integrate Logto into your Python web applicat
 
 - [Logto Python SDK tutorial](#logto-python-sdk-tutorial)
   - [Table of contents](#table-of-contents)
+  - [Installation](#installation)
   - [Integration](#integration)
     - [Init LogtoClient](#init-logtoclient)
     - [Implement the sign-in route](#implement-the-sign-in-route)
@@ -21,6 +22,13 @@ This tutorial will show you how to integrate Logto into your Python web applicat
   - [Scopes and claims](#scopes-and-claims)
     - [Special ID token claims](#special-id-token-claims)
   - [API resources](#api-resources)
+    - [Configure Logto client](#configure-logto-client)
+    - [Fetch access token for the API resource](#fetch-access-token-for-the-api-resource)
+
+## Installation
+```bash
+pip install logto # or `poetry add logto` or whatever you use
+```
 
 ## Integration
 
@@ -237,6 +245,8 @@ See [UserInfoScope](./api.md#logto.models.oidc.UserInfoScope) for details.
 
 We recommend to read [🔐 Role-Based Access Control (RBAC)](https://docs.logto.io/docs/recipes/rbac/) first to understand the basic concepts of Logto RBAC and how to set up API resources properly.
 
+### Configure Logto client
+
 Once you have set up the API resources, you can add them when configuring the Logto client:
 
 ```python
@@ -282,3 +292,15 @@ For every API resource, it will request for both `read` and `write` scopes.
 > It is fine to request scopes that are not defined in the API resources. For example, you can request the `email` scope even if the API resources don't have the `email` scope available. Unavailable scopes will be safely ignored.
 
 After the successful sign-in, Logto will issue proper scopes to every API resource according to the user's roles.
+
+### Fetch access token for the API resource
+
+To fetch the access token for a specific API resource, you can use the `getAccessToken` method:
+
+```python
+accessToken = await client.getAccessToken("https://shopping.your-app.com/api")
+```
+
+This method will return a JWT access token that can be used to access the API resource, if the user has the proper permissions. If the current cached access token has expired, this method will automatically try to use the refresh token to get a new access token.
+
+If failed by any reason, this method will return `None`.
