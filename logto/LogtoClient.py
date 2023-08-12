@@ -105,7 +105,7 @@ class AccessToken(BaseModel):
 
     token: str
     """
-    The access token.
+    The access token string.
     """
     expiresAt: int
     """

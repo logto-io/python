@@ -104,8 +104,7 @@ class IdTokenClaims(BaseModel):
     """The subject identifier for whom the token is intended (user ID)."""
     aud: str
     """
-    The audience that the token is intended for, which is the client ID or the resource
-    indicator.
+    The audience that the token is intended for, which is the client ID.
     """
     exp: int
     """The expiration time of the token (in seconds)."""

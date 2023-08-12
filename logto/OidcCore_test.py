@@ -1,3 +1,4 @@
+import time
 from typing import Any, Callable, Dict, Optional
 from jwt import PyJWK
 import jwt
@@ -160,7 +161,7 @@ class TestOidcCore:
         idToken = IdTokenClaims(
             iss="https://logto.app",
             aud="foo",
-            exp=9616446400,  # Fri Sep 25 2274 11:06:40 GMT+0000
+            exp=int(time.time() - 10),  # Test for the leeway
             iat=1616446300,
             sub="user1",
             name="John Wick",
@@ -174,6 +175,7 @@ class TestOidcCore:
             idToken.model_dump(),
             jwk.key,
             algorithm="ES384",
+            headers={"kid": "1"},
         )
 
         # Mock `get_signing_key_from_jwt` response from jwksClient
