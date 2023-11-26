@@ -1,5 +1,6 @@
 from flask import Flask, session, redirect, request
 from logto import LogtoClient, LogtoConfig, LogtoException, Storage
+from functools import wraps
 from dotenv import load_dotenv
 import os
 
@@ -22,7 +23,7 @@ class SessionStorage(Storage):
 
 client = LogtoClient(
     LogtoConfig(
-        endpoint="http://localhost:3001",  # Replace with your Logto endpoint
+        endpoint=os.getenv("LOGTO_ENDPOINT") or "replace-with-your-logto-endpoint",
         appId=os.getenv("LOGTO_APP_ID") or "replace-with-your-app-id",
         appSecret=os.getenv("LOGTO_APP_SECRET") or "replace-with-your-app-secret",
         resources=[
@@ -34,20 +35,13 @@ client = LogtoClient(
     SessionStorage(),
 )
 
-
 @app.route("/")
 async def index():
     try:
         if client.isAuthenticated() is False:
             return "Not authenticated <a href='/sign-in'>Sign in</a>"
         return (
-            (await client.fetchUserInfo()).model_dump_json(exclude_unset=True)
-            + "<br>"
-            + client.getIdTokenClaims().model_dump_json(exclude_unset=True)
-            + "<br>"
-            + (
-                await client.getAccessTokenClaims("https://default.logto.app/api")
-            ).model_dump_json(exclude_unset=True)
+            "<br><a href='/protected'>View protected</a>"
             + "<br><a href='/sign-out'>Sign out</a>"
         )
     except LogtoException as e:
@@ -77,3 +71,33 @@ async def callback():
         return redirect("/")
     except LogtoException as e:
         return str(e)
+
+### Below is an example of using decorator to protect a route ###
+
+def authenticated(func):
+    @wraps(func)
+    async def wrapper(*args, **kwargs):
+        if client.isAuthenticated() is False:
+            return redirect("/sign-in") # Or directly call `client.signIn`
+        return await func(*args, **kwargs)
+
+    return wrapper
+
+@app.route("/protected")
+@authenticated
+async def protected():
+    try:
+        if client.isAuthenticated() is False:
+            return redirect('/')
+        return (
+            (await client.fetchUserInfo()).model_dump_json(exclude_unset=True)
+            + "<br>"
+            + client.getIdTokenClaims().model_dump_json(exclude_unset=True)
+            + "<br>"
+            + (
+                await client.getAccessTokenClaims("https://default.logto.app/api")
+            ).model_dump_json(exclude_unset=True)
+            + "<br><a href='/sign-out'>Sign out</a>"
+        )
+    except LogtoException as e:
+        return str(e) + "<br><a href='/sign-out'>Sign out</a>"
