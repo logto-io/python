@@ -86,6 +86,18 @@ class UserInfoScope(Scope):
     Note that the identities are not included in the ID token by default. You need to
     use `fetchUserInfo()` to get the identities.
     """
+    organizations = "urn:logto:scope:organizations"
+    """
+    Scope for user's organization IDs and perform organization token grant per [RFC 0001](https://github.com/logto-io/rfcs).
+
+    To learn more about Logto Organizations, see https://docs.logto.io/docs/recipes/organizations/.
+    """
+    organization_roles = "urn:logto:scope:organization_roles"
+    """
+    Scope for user's organization roles per [RFC 0001](https://github.com/logto-io/rfcs).
+
+    To learn more about Logto Organizations, see https://docs.logto.io/docs/recipes/organizations/.
+    """
 
 
 class IdTokenClaims(BaseModel):
@@ -125,6 +137,20 @@ class IdTokenClaims(BaseModel):
     """The user's phone number."""
     phone_number_verified: Optional[bool] = None
     """Whether the user's phone number is verified."""
+    organizations: Optional[List[str]] = None
+    """The organization IDs that the user has membership."""
+    organization_roles: Optional[List[str]] = None
+    """
+    The organization roles that the user has.
+    Each role is in the format of `<organization_id>:<role_name>`.
+    """
+
+
+class ReservedResource(Enum):
+    """Resources that reserved by Logto, which cannot be defined by users."""
+
+    organizations = "urn:logto:resource:organizations"
+    """The resource for organization template per [RFC 0001](https://github.com/logto-io/rfcs)."""
 
 
 class AccessTokenClaims(BaseModel):
@@ -147,8 +173,10 @@ class AccessTokenClaims(BaseModel):
     """
     aud: str
     """
-    The audience that the token is intended for, which is the client ID or the resource
-    indicator.
+    The audience that the token is intended for, which may be one of the following:
+    - Client ID
+    - Resource indicator
+    - Logto organization URN (`urn:logto:organization:<organization_id>`)
     """
     exp: int
     """

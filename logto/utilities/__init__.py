@@ -14,3 +14,19 @@ def removeFalsyKeys(data: Dict[str, Any]) -> Dict[str, Any]:
     Remove keys with falsy values from the given dictionary.
     """
     return {k: v for k, v in data.items() if v}
+
+
+OrganizationUrnPrefix = "urn:logto:organization:"
+"""The prefix for Logto organization URNs."""
+
+
+def buildOrganizationUrn(organizationId: str) -> str:
+    """
+    Build the organization URN from the organization ID.
+
+    Example:
+    ```python
+    buildOrganizationUrn("1") # returns "urn:logto:organization:1"
+    ```
+    """
+    return f"{OrganizationUrnPrefix}{organizationId}"

@@ -5,8 +5,10 @@
   * [LogtoException](#logto.LogtoException.LogtoException)
 * [logto.models.oidc](#logto.models.oidc)
   * [OidcProviderMetadata](#logto.models.oidc.OidcProviderMetadata)
+  * [Scope](#logto.models.oidc.Scope)
   * [UserInfoScope](#logto.models.oidc.UserInfoScope)
   * [IdTokenClaims](#logto.models.oidc.IdTokenClaims)
+  * [ReservedResource](#logto.models.oidc.ReservedResource)
   * [AccessTokenClaims](#logto.models.oidc.AccessTokenClaims)
 * [logto.models.response](#logto.models.response)
   * [TokenResponse](#logto.models.response.TokenResponse)
@@ -24,6 +26,8 @@
 * [logto.utilities](#logto.utilities)
   * [urlsafeEncode](#logto.utilities.urlsafeEncode)
   * [removeFalsyKeys](#logto.utilities.removeFalsyKeys)
+  * [OrganizationUrnPrefix](#logto.utilities.OrganizationUrnPrefix)
+  * [buildOrganizationUrn](#logto.utilities.buildOrganizationUrn)
 * [logto.utilities.test](#logto.utilities.test)
 * [logto.Storage](#logto.Storage)
   * [PersistKey](#logto.Storage.PersistKey)
@@ -70,12 +74,22 @@ See https://openid.net/specs/openid-connect-discovery-1_0.html#ProviderMetadata
 
 This is actually "RECOMMENDED" but Logto requires it
 
+<a id="logto.models.oidc.Scope"></a>
+
+## Scope
+
+```python
+class Scope(Enum)
+```
+
+The scope base class for determining the scope type.
+
 <a id="logto.models.oidc.UserInfoScope"></a>
 
 ## UserInfoScope
 
 ```python
-class UserInfoScope(Enum)
+class UserInfoScope(Scope)
 ```
 
 The available scopes for the userinfo endpoint and the ID token claims.
@@ -122,6 +136,18 @@ The scope for the identities. It maps to the `identities` claim.
 Note that the identities are not included in the ID token by default. You need to
 use `fetchUserInfo()` to get the identities.
 
+<a id="logto.models.oidc.UserInfoScope.organizations"></a>
+
+#### organizations
+
+Scope for user's organization IDs and perform organization token grant per [RFC 0001](https://github.com/logto-io/rfcs).
+
+<a id="logto.models.oidc.UserInfoScope.organization_roles"></a>
+
+#### organization\_roles
+
+Scope for user's organization roles per [RFC 0001](https://github.com/logto-io/rfcs).
+
 <a id="logto.models.oidc.IdTokenClaims"></a>
 
 ## IdTokenClaims
@@ -151,8 +177,7 @@ The subject identifier for whom the token is intended (user ID).
 
 #### aud
 
-The audience that the token is intended for, which is the client ID or the resource
-indicator.
+The audience that the token is intended for, which is the client ID.
 
 <a id="logto.models.oidc.IdTokenClaims.exp"></a>
 
@@ -208,6 +233,35 @@ The user's phone number.
 
 Whether the user's phone number is verified.
 
+<a id="logto.models.oidc.IdTokenClaims.organizations"></a>
+
+#### organizations
+
+The organization IDs that the user has membership.
+
+<a id="logto.models.oidc.IdTokenClaims.organization_roles"></a>
+
+#### organization\_roles
+
+The organization roles that the user has.
+Each role is in the format of `<organization_id>:<role_name>`.
+
+<a id="logto.models.oidc.ReservedResource"></a>
+
+## ReservedResource
+
+```python
+class ReservedResource(Enum)
+```
+
+Resources that reserved by Logto, which cannot be defined by users.
+
+<a id="logto.models.oidc.ReservedResource.organizations"></a>
+
+#### organizations
+
+The resource for organization template per [RFC 0001](https://github.com/logto-io/rfcs).
+
 <a id="logto.models.oidc.AccessTokenClaims"></a>
 
 ## AccessTokenClaims
@@ -237,8 +291,10 @@ The subject identifier for whom the token is intended (user ID).
 
 #### aud
 
-The audience that the token is intended for, which is the client ID or the resource
-indicator.
+The audience that the token is intended for, which may be one of the following:
+- Client ID
+- Resource indicator
+- Logto organization URN (`urn:logto:organization:<organization_id>`)
 
 <a id="logto.models.oidc.AccessTokenClaims.exp"></a>
 
@@ -402,6 +458,19 @@ The custom data of the user, can be any JSON object.
 The identities of the user, can be a dictionary of key-value pairs, where the key is
 the identity type and the value is the `UserIdentity` object.
 
+<a id="logto.models.response.UserInfoResponse.organizations"></a>
+
+#### organizations
+
+The organization IDs that the user has membership.
+
+<a id="logto.models.response.UserInfoResponse.organization_roles"></a>
+
+#### organization\_roles
+
+The organization roles that the user has.
+Each role is in the format of `<organization_id>:<role_name>`.
+
 <a id="logto.LogtoClient"></a>
 
 # logto.LogtoClient
@@ -518,7 +587,7 @@ The access token class for a resource.
 
 #### token
 
-The access token.
+The access token string.
 
 <a id="logto.LogtoClient.AccessToken.expiresAt"></a>
 
@@ -638,6 +707,18 @@ Get the access token for the given resource. If the access token is expired,
 it will be refreshed automatically. If no refresh token is found, None will
 be returned.
 
+<a id="logto.LogtoClient.LogtoClient.getOrganizationToken"></a>
+
+#### getOrganizationToken
+
+```python
+async def getOrganizationToken(organizationId: str) -> Optional[str]
+```
+
+Get the access token for the given organization ID. If the access token is expired,
+it will be refreshed automatically. If no refresh token is found, None will
+be returned.
+
 <a id="logto.LogtoClient.LogtoClient.getAccessTokenClaims"></a>
 
 #### getAccessTokenClaims
@@ -647,6 +728,18 @@ async def getAccessTokenClaims(resource: str = "") -> AccessTokenClaims
 ```
 
 Get the claims in the access token for the given resource. If the access token
+is expired, it will be refreshed automatically. If it's unable to refresh the
+access token, an exception will be thrown.
+
+<a id="logto.LogtoClient.LogtoClient.getOrganizationTokenClaims"></a>
+
+#### getOrganizationTokenClaims
+
+```python
+async def getOrganizationTokenClaims(organizationId: str) -> AccessTokenClaims
+```
+
+Get the claims in the access token for the given organization ID. If the access token
 is expired, it will be refreshed automatically. If it's unable to refresh the
 access token, an exception will be thrown.
 
@@ -820,6 +913,9 @@ async def fetchTokenByRefreshToken(clientId: str,
 
 Fetch the token from the token endpoint using the refresh token.
 
+If the resource is an organization URN, the organization ID will be extracted
+and used as the `organization_id` parameter.
+
 <a id="logto.OidcCore.OidcCore.verifyIdToken"></a>
 
 #### verifyIdToken
@@ -828,7 +924,8 @@ Fetch the token from the token endpoint using the refresh token.
 def verifyIdToken(idToken: str, clientId: str) -> None
 ```
 
-Verify the ID Token, throw an exception if the verification fails.
+Verify the ID Token signature and its issuer and client ID, throw an exception
+if the verification fails.
 
 <a id="logto.OidcCore.OidcCore.fetchUserInfo"></a>
 
@@ -839,6 +936,8 @@ async def fetchUserInfo(accessToken: str) -> UserInfoResponse
 ```
 
 Fetch the user info from the OpenID Connect UserInfo endpoint.
+
+See: https://openid.net/specs/openid-connect-core-1_0.html#UserInfo
 
 <a id="logto.utilities"></a>
 
@@ -863,6 +962,27 @@ def removeFalsyKeys(data: Dict[str, Any]) -> Dict[str, Any]
 ```
 
 Remove keys with falsy values from the given dictionary.
+
+<a id="logto.utilities.OrganizationUrnPrefix"></a>
+
+#### OrganizationUrnPrefix
+
+The prefix for Logto organization URNs.
+
+<a id="logto.utilities.buildOrganizationUrn"></a>
+
+#### buildOrganizationUrn
+
+```python
+def buildOrganizationUrn(organizationId: str) -> str
+```
+
+Build the organization URN from the organization ID.
+
+Example:
+```python
+buildOrganizationUrn("1") # returns "urn:logto:organization:1"
+```
 
 <a id="logto.utilities.test"></a>
 

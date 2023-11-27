@@ -55,6 +55,11 @@ class TestLogtoClient:
         mockRequest(json=mockProviderMetadata.__dict__)
         return LogtoClient(config, storage)
 
+    @pytest.fixture
+    def organizationClient(self, client: LogtoClient) -> LogtoClient:
+        client.config.scopes = [UserInfoScope.organizations]
+        return client
+
     async def test_getOidcCore(self, client: LogtoClient) -> None:
         assert isinstance(await client.getOidcCore(), OidcCore)
 
@@ -82,6 +87,16 @@ class TestLogtoClient:
         assert (
             url
             == "https://logto.app/oidc/auth?client_id=replace-with-your-app-id&redirect_uri=redirectUri&response_type=code&scope=email+phone+openid+offline_access+profile&prompt=consent&code_challenge=codeChallenge&code_challenge_method=S256&state=state"
+        )
+
+    async def test_signIn_organizationScope(
+        self, organizationClient: LogtoClient
+    ) -> None:
+        url = await organizationClient.signIn("redirectUri")
+
+        assert (
+            url
+            == "https://logto.app/oidc/auth?client_id=replace-with-your-app-id&redirect_uri=redirectUri&response_type=code&scope=urn%3Alogto%3Ascope%3Aorganizations+openid+offline_access+profile&resource=urn%3Alogto%3Aresource%3Aorganizations&prompt=consent&code_challenge=codeChallenge&code_challenge_method=S256&state=state"
         )
 
     async def test_signIn_allConfigs(self, client: LogtoClient) -> None:
@@ -258,6 +273,24 @@ class TestLogtoClient:
 
         assert await client.getAccessToken() == "accessToken"
 
+    async def test_getOrganizationToken(
+        self,
+        organizationClient: LogtoClient,
+        storage: Storage,
+    ) -> None:
+        assert await organizationClient.getOrganizationToken("1") == None
+        storage.set(
+            "accessTokenMap",
+            '{"x":{"urn:logto:organization:1":{"token":"organization_token","expiresAt": 9999999999}}}',
+        )
+        assert (
+            await organizationClient.getOrganizationToken("1") == "organization_token"
+        )
+
+    async def test_getOrganizationToken_noScope(self, client: LogtoClient) -> None:
+        with pytest.raises(LogtoException, match="scope is required"):
+            await client.getOrganizationToken("1")
+
     async def test_getAccessTokenClaims(
         self, client: LogtoClient, storage: Storage
     ) -> None:
@@ -269,6 +302,30 @@ class TestLogtoClient:
         )
 
         assert await client.getAccessTokenClaims() == AccessTokenClaims(
+            iss="https://logto.app",
+            aud="https://logto.app/api",
+            exp=9999999999,
+            iat=1616446300,
+            sub="user1",
+            scope="admin user",
+            client_id="saqre1oqbkpj6zhq85ho0",
+        )
+
+    async def test_getOrganizationTokenClaims(
+        self, organizationClient: LogtoClient, storage: Storage
+    ) -> None:
+        # Assign a valid access token raw string
+        accessToken = "eyJhbGciOiJSUzI1NiIsImtpZCI6IjEifQ.eyJpc3MiOiJodHRwczovL2xvZ3RvLmFwcCIsImF1ZCI6Imh0dHBzOi8vbG9ndG8uYXBwL2FwaSIsImV4cCI6OTk5OTk5OTk5OSwiaWF0IjoxNjE2NDQ2MzAwLCJzdWIiOiJ1c2VyMSIsInNjb3BlIjoiYWRtaW4gdXNlciIsImNsaWVudF9pZCI6InNhcXJlMW9xYmtwajZ6aHE4NWhvMCJ9.12345678901234567890123456789012345678901234567890"
+        storage.set(
+            "accessTokenMap",
+            '{"x":{"urn:logto:organization:1":{"token":"'
+            + accessToken
+            + '", "expiresAt": 9999999999}}}',
+        )
+
+        assert await organizationClient.getOrganizationTokenClaims(
+            "1"
+        ) == AccessTokenClaims(
             iss="https://logto.app",
             aud="https://logto.app/api",
             exp=9999999999,

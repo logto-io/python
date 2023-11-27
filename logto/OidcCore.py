@@ -21,7 +21,7 @@ from .models.oidc import (
     UserInfoScope,
 )
 from .models.response import TokenResponse, UserInfoResponse
-from .utilities import removeFalsyKeys, urlsafeEncode
+from .utilities import OrganizationUrnPrefix, removeFalsyKeys, urlsafeEncode
 
 
 class OidcCore:
@@ -126,6 +126,9 @@ class OidcCore:
     ) -> TokenResponse:
         """
         Fetch the token from the token endpoint using the refresh token.
+
+        If the resource is an organization URN, the organization ID will be extracted
+        and used as the `organization_id` parameter.
         """
         tokenEndpoint = self.metadata.token_endpoint
         async with aiohttp.ClientSession() as session:
@@ -137,7 +140,12 @@ class OidcCore:
                         "client_id": clientId,
                         "client_secret": clientSecret,
                         "refresh_token": refreshToken,
-                        "resource": resource,
+                        "resource": resource
+                        if not resource.startswith(OrganizationUrnPrefix)
+                        else None,
+                        "organization_id": resource[len(OrganizationUrnPrefix) :]
+                        if resource.startswith(OrganizationUrnPrefix)
+                        else None,
                     }
                 ),
             ) as resp:
