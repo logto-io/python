@@ -7,8 +7,7 @@ from typing import Dict, List, Literal, Optional, Union
 from pydantic import BaseModel
 import urllib.parse
 
-from logto.models.oidc import Scope
-
+from .models.oidc import ReservedResource, Scope, UserInfoScope
 from .Storage import MemoryStorage, Storage
 from .LogtoException import LogtoException
 from .OidcCore import (
@@ -18,7 +17,7 @@ from .OidcCore import (
     TokenResponse,
     UserInfoResponse,
 )
-from .utilities import removeFalsyKeys
+from .utilities import OrganizationUrnPrefix, buildOrganizationUrn, removeFalsyKeys
 
 
 class LogtoConfig(BaseModel):
@@ -239,7 +238,11 @@ class LogtoClient:
                         (item.value if isinstance(item, Scope) else item)
                         for item in (scopes + OidcCore.defaultScopes)
                     ),
-                    "resource": resources,
+                    "resource": (
+                        list(set(resources + [ReservedResource.organizations.value]))
+                        if UserInfoScope.organizations in scopes
+                        else resources
+                    ),
                     "prompt": prompt,
                     "code_challenge": codeChallenge,
                     "code_challenge_method": "S256",
@@ -398,6 +401,14 @@ class LogtoClient:
         if accessToken is not None:
             return accessToken
 
+        if (
+            resource.startswith(OrganizationUrnPrefix)
+            and UserInfoScope.organizations not in self.config.scopes
+        ):
+            raise LogtoException(
+                "The `UserInfoScope.organizations` scope is required to fetch organization tokens"
+            )
+
         refreshToken = self._storage.get("refreshToken")
         if refreshToken is None:
             return None
@@ -412,6 +423,14 @@ class LogtoClient:
         await self._handleTokenResponse(resource, tokenResponse)
         return tokenResponse.access_token
 
+    async def getOrganizationToken(self, organizationId: str) -> Optional[str]:
+        """
+        Get the access token for the given organization ID. If the access token is expired,
+        it will be refreshed automatically. If no refresh token is found, None will
+        be returned.
+        """
+        return await self.getAccessToken(buildOrganizationUrn(organizationId))
+
     async def getAccessTokenClaims(self, resource: str = "") -> AccessTokenClaims:
         """
         Get the claims in the access token for the given resource. If the access token
@@ -420,6 +439,16 @@ class LogtoClient:
         """
         accessToken = await self.getAccessToken(resource)
         return OidcCore.decodeAccessToken(accessToken)
+
+    async def getOrganizationTokenClaims(
+        self, organizationId: str
+    ) -> AccessTokenClaims:
+        """
+        Get the claims in the access token for the given organization ID. If the access token
+        is expired, it will be refreshed automatically. If it's unable to refresh the
+        access token, an exception will be thrown.
+        """
+        return await self.getAccessTokenClaims(buildOrganizationUrn(organizationId))
 
     def getIdToken(self) -> Optional[str]:
         """

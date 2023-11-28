@@ -8,22 +8,22 @@ This tutorial will show you how to integrate Logto into your Python web applicat
 
 ## Table of contents
 
-- [Logto Python SDK tutorial](#logto-python-sdk-tutorial)
-  - [Table of contents](#table-of-contents)
-  - [Installation](#installation)
-  - [Integration](#integration)
-    - [Init LogtoClient](#init-logtoclient)
-    - [Implement the sign-in route](#implement-the-sign-in-route)
-    - [Implement the callback route](#implement-the-callback-route)
-    - [Implement the home page](#implement-the-home-page)
-    - [Implement the sign-out route](#implement-the-sign-out-route)
-    - [Checkpoint: Test your application](#checkpoint-test-your-application)
-  - [Protect your routes](#protect-your-routes)
-  - [Scopes and claims](#scopes-and-claims)
-    - [Special ID token claims](#special-id-token-claims)
-  - [API resources](#api-resources)
-    - [Configure Logto client](#configure-logto-client)
-    - [Fetch access token for the API resource](#fetch-access-token-for-the-api-resource)
+- [Table of contents](#table-of-contents)
+- [Installation](#installation)
+- [Integration](#integration)
+  - [Init LogtoClient](#init-logtoclient)
+  - [Implement the sign-in route](#implement-the-sign-in-route)
+  - [Implement the callback route](#implement-the-callback-route)
+  - [Implement the home page](#implement-the-home-page)
+  - [Implement the sign-out route](#implement-the-sign-out-route)
+  - [Checkpoint: Test your application](#checkpoint-test-your-application)
+- [Protect your routes](#protect-your-routes)
+- [Scopes and claims](#scopes-and-claims)
+  - [Special ID token claims](#special-id-token-claims)
+- [API resources](#api-resources)
+  - [Configure Logto client](#configure-logto-client)
+  - [Fetch access token for the API resource](#fetch-access-token-for-the-api-resource)
+  - [Fetch organization token for user](#fetch-organization-token-for-user)
 
 ## Installation
 ```bash
@@ -299,8 +299,37 @@ To fetch the access token for a specific API resource, you can use the `getAcces
 
 ```python
 accessToken = await client.getAccessToken("https://shopping.your-app.com/api")
+# or
+claims = await client.getAccessTokenClaims("https://shopping.your-app.com/api")
 ```
 
 This method will return a JWT access token that can be used to access the API resource, if the user has the proper permissions. If the current cached access token has expired, this method will automatically try to use the refresh token to get a new access token.
 
 If failed by any reason, this method will return `None`.
+
+### Fetch organization token for user
+
+If organization is new to you, please read [🏢 Organizations (Multi-tenancy)](https://docs.logto.io/docs/recipes/organizations/) to get started.
+
+You need to add `UserInfoScope.organizations` scope when configuring the Logto client:
+
+```python
+from logto import LogtoClient, LogtoConfig, UserInfoScope
+
+client = LogtoClient(
+    LogtoConfig(
+        # ...other configs
+        scopes=[UserInfoScope.organizations],
+    ),
+)
+```
+
+Once the user is signed in, you can fetch the organization token for the user:
+
+```python
+# Replace the parameter with a valid organization ID.
+# Valid organization IDs for the user can be found in the ID token claim `organizations`.
+organizationToken = await client.getOrganizationToken("organization-id")
+# or
+claims = await client.getOrganizationTokenClaims("organization-id")
+```

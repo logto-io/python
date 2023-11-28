@@ -1,4 +1,4 @@
-from typing import Any, Optional, Dict
+from typing import Any, Optional, Dict, List
 from pydantic import BaseModel
 
 
@@ -89,4 +89,11 @@ class UserInfoResponse(BaseModel):
     """
     The identities of the user, can be a dictionary of key-value pairs, where the key is
     the identity type and the value is the `UserIdentity` object.
+    """
+    organizations: Optional[List[str]] = None
+    """The organization IDs that the user has membership."""
+    organization_roles: Optional[List[str]] = None
+    """
+    The organization roles that the user has.
+    Each role is in the format of `<organization_id>:<role_name>`.
     """
