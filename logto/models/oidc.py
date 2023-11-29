@@ -65,7 +65,7 @@ class UserInfoScope(Scope):
     """
 
     openid = "openid"
-    """The preserved scope for OpenID Connect. It maps to the `sub` claim."""
+    """The reserved scope for OpenID Connect. It maps to the `sub` claim."""
     profile = "profile"
     """The scope for the basic profile. It maps to the `name`, `username`, `picture` claims."""
     email = "email"
