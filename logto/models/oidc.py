@@ -1,6 +1,7 @@
 from enum import Enum
-from typing import List, Optional
+from typing import List, Optional, Any
 from pydantic import BaseModel, ConfigDict
+import warnings
 
 
 class OidcProviderMetadata(BaseModel):
@@ -52,7 +53,16 @@ class OidcProviderMetadata(BaseModel):
 class Scope(Enum):
     """The scope base class for determining the scope type."""
 
-    pass
+    def __new__(cls, value: Any):
+        member = object.__new__(cls)
+        member._value_ = value
+        return member
+
+    @classmethod
+    def _get_deprecated_member(cls, member):
+        # _get_deprecated_member is a protect util method to get the deprecated member with warning.
+        warnings.warn(f"{member.name} is deprecated.", DeprecationWarning, stacklevel=2)
+        return member
 
 
 class OAuthScope(Scope):
@@ -73,6 +83,15 @@ class UserInfoScope(Scope):
     phone = "phone"
     """The scope for the phone number. It maps to the `phone_number`, `phone_number_verified` claims."""
     customData = "custom_data"
+    """
+    DEPRECATED: use `custom_data` instead.
+
+    The scope for the custom data. It maps to the `custom_data` claim.
+
+    Note that the custom data is not included in the ID token by default. You need to
+    use `fetchUserInfo()` to get the custom data.
+    """
+    custom_data = "custom_data"
     """
     The scope for the custom data. It maps to the `custom_data` claim.
 
@@ -98,6 +117,18 @@ class UserInfoScope(Scope):
 
     To learn more about Logto Organizations, see https://docs.logto.io/docs/recipes/organizations/.
     """
+
+    @classmethod
+    def _missing_(cls, value):
+        """
+        `_missing_` is a [built-in method](https://docs.python.org/3/library/enum.html#supported-sunder-names) to handle
+        missing members, we overwrite it and throws a warning for deprecated members.
+
+        In this way, we can both warn the users, keep the type checking working and make the deprecated value backward compatible.
+        """
+        if value == cls.customData.value:
+            return cls._get_deprecated_member(cls.customData)
+        return super()._missing_(value)
 
 
 class IdTokenClaims(BaseModel):

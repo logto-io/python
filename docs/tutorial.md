@@ -8,22 +8,23 @@ This tutorial will show you how to integrate Logto into your Python web applicat
 
 ## Table of contents
 
-- [Table of contents](#table-of-contents)
-- [Installation](#installation)
-- [Integration](#integration)
-  - [Init LogtoClient](#init-logtoclient)
-  - [Implement the sign-in route](#implement-the-sign-in-route)
-  - [Implement the callback route](#implement-the-callback-route)
-  - [Implement the home page](#implement-the-home-page)
-  - [Implement the sign-out route](#implement-the-sign-out-route)
-  - [Checkpoint: Test your application](#checkpoint-test-your-application)
-- [Protect your routes](#protect-your-routes)
-- [Scopes and claims](#scopes-and-claims)
-  - [Special ID token claims](#special-id-token-claims)
-- [API resources](#api-resources)
-  - [Configure Logto client](#configure-logto-client)
-  - [Fetch access token for the API resource](#fetch-access-token-for-the-api-resource)
-  - [Fetch organization token for user](#fetch-organization-token-for-user)
+- [Logto Python SDK tutorial](#logto-python-sdk-tutorial)
+  - [Table of contents](#table-of-contents)
+  - [Installation](#installation)
+  - [Integration](#integration)
+    - [Init LogtoClient](#init-logtoclient)
+    - [Implement the sign-in route](#implement-the-sign-in-route)
+    - [Implement the callback route](#implement-the-callback-route)
+    - [Implement the home page](#implement-the-home-page)
+    - [Implement the sign-out route](#implement-the-sign-out-route)
+    - [Checkpoint: Test your application](#checkpoint-test-your-application)
+  - [Protect your routes](#protect-your-routes)
+  - [Scopes and claims](#scopes-and-claims)
+    - [Special ID token claims](#special-id-token-claims)
+  - [API resources](#api-resources)
+    - [Configure Logto client](#configure-logto-client)
+    - [Fetch access token for the API resource](#fetch-access-token-for-the-api-resource)
+    - [Fetch organization token for user](#fetch-organization-token-for-user)
 
 ## Installation
 ```bash
@@ -51,12 +52,13 @@ Also replace the default memory storage with a persistent storage, for example:
 ```python
 from logto import LogtoClient, LogtoConfig, Storage
 from flask import session
+from typing import Union
 
 class SessionStorage(Storage):
-    def get(self, key: str) -> str | None:
+    def get(self, key: str) -> Union[str, None]:
         return session.get(key, None)
 
-    def set(self, key: str, value: str | None) -> None:
+    def set(self, key: str, value: Union[str, None]) -> None:
         session[key] = value
 
     def delete(self, key: str) -> None:
