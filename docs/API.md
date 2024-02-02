@@ -98,7 +98,7 @@ The available scopes for the userinfo endpoint and the ID token claims.
 
 #### openid
 
-The preserved scope for OpenID Connect. It maps to the `sub` claim.
+The reserved scope for OpenID Connect. It maps to the `sub` claim.
 
 <a id="logto.models.oidc.UserInfoScope.profile"></a>
 
@@ -120,7 +120,7 @@ The scope for the phone number. It maps to the `phone_number`, `phone_number_ver
 
 <a id="logto.models.oidc.UserInfoScope.customData"></a>
 
-#### customData
+#### custom\_data
 
 The scope for the custom data. It maps to the `custom_data` claim.
 
@@ -142,11 +142,15 @@ use `fetchUserInfo()` to get the identities.
 
 Scope for user's organization IDs and perform organization token grant per [RFC 0001](https://github.com/logto-io/rfcs).
 
+To learn more about Logto Organizations, see https://docs.logto.io/docs/recipes/organizations/.
+
 <a id="logto.models.oidc.UserInfoScope.organization_roles"></a>
 
 #### organization\_roles
 
 Scope for user's organization roles per [RFC 0001](https://github.com/logto-io/rfcs).
+
+To learn more about Logto Organizations, see https://docs.logto.io/docs/recipes/organizations/.
 
 <a id="logto.models.oidc.IdTokenClaims"></a>
 
