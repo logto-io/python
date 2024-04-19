@@ -140,12 +140,16 @@ class OidcCore:
                         "client_id": clientId,
                         "client_secret": clientSecret,
                         "refresh_token": refreshToken,
-                        "resource": resource
-                        if not resource.startswith(OrganizationUrnPrefix)
-                        else None,
-                        "organization_id": resource[len(OrganizationUrnPrefix) :]
-                        if resource.startswith(OrganizationUrnPrefix)
-                        else None,
+                        "resource": (
+                            resource
+                            if not resource.startswith(OrganizationUrnPrefix)
+                            else None
+                        ),
+                        "organization_id": (
+                            resource[len(OrganizationUrnPrefix) :]
+                            if resource.startswith(OrganizationUrnPrefix)
+                            else None
+                        ),
                     }
                 ),
             ) as resp:
