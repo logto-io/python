@@ -1,6 +1,6 @@
 [project]
 name = "logto"
-version = "0.2.0"
+version = "0.2.1"
 description = "Logto Python SDK."
 authors = [
     {name = "Silverhand Inc.", email = "contact@silverhand.io"},
