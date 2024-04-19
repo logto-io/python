@@ -1,40 +1,28 @@
-[tool.poetry]
+[project]
 name = "logto"
 version = "0.2.0"
 description = "Logto Python SDK."
-authors = ["Silverhand Inc. <contact@silverhand.io>"]
-license = "MIT"
+authors = [
+    {name = "Silverhand Inc.", email = "contact@silverhand.io"},
+]
+dependencies = [
+    "aiohttp<4.0.0,>=3.8.5",
+    "pydantic<3.0.0,>=2.1.1",
+    "pyjwt[crypto]<3.0.0,>=2.8.0",
+]
+requires-python = "<4.0,>=3.8"
 readme = "README.md"
+license = {text = "MIT"}
+keywords = ["logto", "auth", "user", "authentication", "authorization"]
+
+[project.urls]
 homepage = "https://logto.io/"
 repository = "https://github.com/logto-io/python"
 documentation = "https://github.com/logto-io/python/tree/master/docs"
-keywords = ["logto", "auth", "user", "authentication", "authorization"]
-
-[tool.poetry.dependencies]
-python = "^3.8"
-aiohttp = "^3.8.5"
-pydantic = "^2.1.1"
-pyjwt = { extras = ["crypto"], version = "^2.8.0" }
-
-[tool.poetry.group.dev.dependencies]
-flask = { extras = ["async"], version = "^2.3.2" }
-pytest = "^7.4.0"
-pytest-cov = "^4.1.0"
-python-dotenv = "^1.0.0"
-black = "^23.7.0"
-pytest-mock = "^3.11.1"
-pytest-asyncio = "^0.21.1"
-pydoc-markdown = "^4.8.2"
-
-[tool.poe.tasks] # Install poethepoet as a poetry plugin to enable the `poetry poe *` command.
-test = { cmd = "pytest --cov --cov-report=term-missing" }
-flask = { cmd = "flask --app samples.flask --debug run" }
-black = { cmd = "black" }
-doc = { cmd = "pydoc-markdown" }
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
 
 [tool.coverage.run]
 branch = true
@@ -60,3 +48,29 @@ render_toc_title = "Logto Python SDK API reference"
 [[tool.pydoc-markdown.processors]]
 type = "filter"
 expression = "not name.endswith('_test') and default()"
+
+[tool.pdm]
+distribution = true
+
+[tool.pdm.scripts]
+test = "pytest --cov --cov-report=term-missing"
+flask = "flask --app samples.flask --debug run"
+doc = "pydoc-markdown"
+
+[tool.pdm.dev-dependencies]
+dev = [
+    "flask[async]>=2.3.3",
+    "pytest>=7.4.4",
+    "pytest-cov>=4.1.0",
+    "python-dotenv>=1.0.1",
+    "black>=24.3.0",
+    "pytest-mock>=3.14.0",
+    "pytest-asyncio>=0.23.6",
+    "pydoc-markdown>=4.8.2",
+]
+
+[tool.pdm.resolution]
+excludes = ["black"] # pydoc-markdown requires black<24.0.0, but we need to upgrade it to >=24.3.0
+
+[tool.pdm.build]
+includes = []
