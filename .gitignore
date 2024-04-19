@@ -25,3 +25,4 @@ cache
 .history
 .vercel
 .coverage
+.pdm-python
