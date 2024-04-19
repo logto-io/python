@@ -25,6 +25,9 @@ jobs:
         run: |
           pdm install
 
+      - name: Check format
+        run: pdm run black logto samples --check
+
       - name: Build
         run: pdm build
 
