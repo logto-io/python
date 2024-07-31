@@ -22,21 +22,21 @@ class Storage(ABC):
     """
 
     @abstractmethod
-    def get(self, key: PersistKey) -> Optional[str]:
+    async def get(self, key: PersistKey) -> Optional[str]:
         """
         Get the stored string for the given key, return None if not found.
         """
         ...
 
     @abstractmethod
-    def set(self, key: PersistKey, value: Optional[str]) -> None:
+    async def set(self, key: PersistKey, value: Optional[str]) -> None:
         """
         Set the stored value (string or None) for the given key.
         """
         ...
 
     @abstractmethod
-    def delete(self, key: PersistKey) -> None:
+    async def delete(self, key: PersistKey) -> None:
         ...
         """
         Delete the stored value for the given key.
@@ -52,7 +52,7 @@ class MemoryStorage(Storage):
     See `Storage` for the interface.
     """
 
-    def printWarning() -> None:
+    def printWarning(self) -> None:
         print(
             "WARNING: Using MemoryStorage for Logto client, this should only be used for testing.",
             "Replace with a persistent storage for production.",
@@ -61,14 +61,14 @@ class MemoryStorage(Storage):
     def __init__(self) -> None:
         self._data: Dict[str, str] = {}
 
-    def get(self, key: str) -> Optional[str]:
+    async def get(self, key: str) -> Optional[str]:
         MemoryStorage.printWarning()
         return self._data.get(key, None)
 
-    def set(self, key: str, value: Optional[str]) -> None:
+    async def set(self, key: str, value: Optional[str]) -> None:
         MemoryStorage.printWarning()
         self._data[key] = value
 
-    def delete(self, key: str) -> None:
+    async def delete(self, key: str) -> None:
         MemoryStorage.printWarning()
         self._data.pop(key, None)

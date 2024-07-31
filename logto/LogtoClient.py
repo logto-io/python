@@ -156,35 +156,35 @@ class LogtoClient:
             )
         return self._oidcCore
 
-    def _getAccessTokenMap(self) -> AccessTokenMap:
+    async def _getAccessTokenMap(self) -> AccessTokenMap:
         """
         Get the access token map from storage.
         """
-        accessTokenMap = self._storage.get("accessTokenMap")
+        accessTokenMap = await self._storage.get("accessTokenMap")
         try:
             return AccessTokenMap.model_validate_json(accessTokenMap)
         except:
             return AccessTokenMap(x={})
 
-    def _setAccessToken(self, resource: str, accessToken: str, expiresIn: int) -> None:
+    async def _setAccessToken(self, resource: str, accessToken: str, expiresIn: int) -> None:
         """
         Set the access token for the given resource to storage.
         """
-        accessTokenMap = self._getAccessTokenMap()
+        accessTokenMap = await self._getAccessTokenMap()
         accessTokenMap.x[resource] = AccessToken(
             token=accessToken,
             expiresAt=int(time.time())
             + expiresIn
             - 60,  # 60 seconds earlier to avoid clock skew
         )
-        self._storage.set("accessTokenMap", accessTokenMap.model_dump_json())
+        await self._storage.set("accessTokenMap", accessTokenMap.model_dump_json())
 
-    def _getAccessToken(self, resource: str) -> Optional[str]:
+    async def _getAccessToken(self, resource: str) -> Optional[str]:
         """
         Get the valid access token for the given resource from storage, no refresh will be
         performed.
         """
-        accessTokenMap = self._getAccessTokenMap()
+        accessTokenMap = await self._getAccessTokenMap()
         accessToken = accessTokenMap.x.get(resource, None)
         if accessToken is None or accessToken.expiresAt < int(time.time()):
             return None
@@ -203,12 +203,12 @@ class LogtoClient:
             (await self.getOidcCore()).verifyIdToken(
                 tokenResponse.id_token, self.config.appId
             )
-            self._storage.set("idToken", tokenResponse.id_token)
+            await self._storage.set("idToken", tokenResponse.id_token)
 
         if tokenResponse.refresh_token is not None:
-            self._storage.set("refreshToken", tokenResponse.refresh_token)
+            await self._storage.set("refreshToken", tokenResponse.refresh_token)
 
-        self._setAccessToken(
+        await self._setAccessToken(
             resource, tokenResponse.access_token, tokenResponse.expires_in
         )
 
@@ -254,12 +254,12 @@ class LogtoClient:
         )
         return f"{authorizationEndpoint}?{query}"
 
-    def _getSignInSession(self) -> Optional[SignInSession]:
+    async def _getSignInSession(self) -> Optional[SignInSession]:
         """
         Try to parse the current sign-in session from storage. If the value does not
         exist or parse failed, return None.
         """
-        signInSession = self._storage.get("signInSession")
+        signInSession = await self._storage.get("signInSession")
         if signInSession is None:
             return None
         try:
@@ -267,8 +267,8 @@ class LogtoClient:
         except:
             return None
 
-    def _setSignInSession(self, signInSession: SignInSession) -> None:
-        self._storage.set("signInSession", signInSession.model_dump_json())
+    async def _setSignInSession(self, signInSession: SignInSession) -> None:
+        await self._storage.set("signInSession", signInSession.model_dump_json())
 
     async def signIn(
         self, redirectUri: str, interactionMode: Optional[InteractionMode] = None
@@ -293,7 +293,7 @@ class LogtoClient:
             redirectUri, codeChallenge, state, interactionMode
         )
 
-        self._setSignInSession(
+        await self._setSignInSession(
             SignInSession(
                 redirectUri=redirectUri,
                 codeVerifier=codeVerifier,
@@ -301,7 +301,7 @@ class LogtoClient:
             )
         )
         for key in ["idToken", "accessToken", "refreshToken"]:
-            self._storage.delete(key)
+            await self._storage.delete(key)
 
         return signInUrl
 
@@ -323,9 +323,9 @@ class LogtoClient:
           return redirect(await client.signOut('https://example.com'))
           ```
         """
-        self._storage.delete("idToken")
-        self._storage.delete("refreshToken")
-        self._storage.delete("accessTokenMap")
+        await self._storage.delete("idToken")
+        await self._storage.delete("refreshToken")
+        await self._storage.delete("accessTokenMap")
 
         endSessionEndpoint = (await self.getOidcCore()).metadata.end_session_endpoint
 
@@ -352,7 +352,7 @@ class LogtoClient:
         Handle the sign-in callback from the Logto server. This method should be called
         in the callback route handler of your application.
         """
-        signInSession = self._getSignInSession()
+        signInSession = await self._getSignInSession()
 
         if signInSession is None:
             raise LogtoException("Sign-in session not found")
@@ -389,7 +389,7 @@ class LogtoClient:
         )
 
         await self._handleTokenResponse("", tokenResponse)
-        self._storage.delete("signInSession")
+        await self._storage.delete("signInSession")
 
     async def getAccessToken(self, resource: str = "") -> Optional[str]:
         """
@@ -397,7 +397,7 @@ class LogtoClient:
         it will be refreshed automatically. If no refresh token is found, None will
         be returned.
         """
-        accessToken = self._getAccessToken(resource)
+        accessToken = await self._getAccessToken(resource)
         if accessToken is not None:
             return accessToken
 
@@ -409,7 +409,7 @@ class LogtoClient:
                 "The `UserInfoScope.organizations` scope is required to fetch organization tokens"
             )
 
-        refreshToken = self._storage.get("refreshToken")
+        refreshToken = await self._storage.get("refreshToken")
         if refreshToken is None:
             return None
 
@@ -450,35 +450,35 @@ class LogtoClient:
         """
         return await self.getAccessTokenClaims(buildOrganizationUrn(organizationId))
 
-    def getIdToken(self) -> Optional[str]:
+    async def getIdToken(self) -> Optional[str]:
         """
         Get the ID Token string. If you need to get the claims in the ID Token, use
         `getIdTokenClaims` instead.
         """
-        return self._storage.get("idToken")
+        return await self._storage.get("idToken")
 
-    def getIdTokenClaims(self) -> IdTokenClaims:
+    async def getIdTokenClaims(self) -> IdTokenClaims:
         """
         Get the claims in the ID Token. If the ID Token does not exist, an exception
         will be thrown.
         """
-        idToken = self._storage.get("idToken")
+        idToken = await self._storage.get("idToken")
         if idToken is None:
             raise LogtoException("ID Token not found")
 
         return OidcCore.decodeIdToken(idToken)
 
-    def getRefreshToken(self) -> Optional[str]:
+    async def getRefreshToken(self) -> Optional[str]:
         """
         Get the refresh token string.
         """
-        return self._storage.get("refreshToken")
+        return await self._storage.get("refreshToken")
 
-    def isAuthenticated(self) -> bool:
+    async def isAuthenticated(self) -> bool:
         """
         Check if the user is authenticated by checking if the ID Token exists.
         """
-        return self._storage.get("idToken") is not None
+        return await self._storage.get("idToken") is not None
 
     async def fetchUserInfo(self) -> UserInfoResponse:
         """
