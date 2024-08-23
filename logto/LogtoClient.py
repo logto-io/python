@@ -166,7 +166,9 @@ class LogtoClient:
         except:
             return AccessTokenMap(x={})
 
-    async def _setAccessToken(self, resource: str, accessToken: str, expiresIn: int) -> None:
+    async def _setAccessToken(
+        self, resource: str, accessToken: str, expiresIn: int
+    ) -> None:
         """
         Set the access token for the given resource to storage.
         """
