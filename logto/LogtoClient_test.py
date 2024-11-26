@@ -1,13 +1,24 @@
+from itertools import combinations
 from typing import Any, Callable, Dict, Optional
-from pytest_mock import MockerFixture
+from urllib.parse import quote
+
 import pytest
+from pytest_mock import MockerFixture
 
 from . import LogtoClient, LogtoConfig, LogtoException, Storage
-from .utilities.test import mockHttp, mockProviderMetadata
+from .models.oidc import (
+    AccessTokenClaims,
+    DirectSignInOption,
+    DirectSignInOptionMethod,
+    FirstScreen,
+    Identifier,
+    IdTokenClaims,
+    UserInfoScope,
+)
 from .models.response import TokenResponse, UserInfoResponse
-from .models.oidc import IdTokenClaims, AccessTokenClaims, UserInfoScope
-from .Storage import MemoryStorage, Storage
 from .OidcCore import OidcCore
+from .Storage import MemoryStorage, Storage
+from .utilities.test import mockHttp, mockProviderMetadata
 
 MockRequest = Callable[..., None]
 
@@ -108,6 +119,80 @@ class TestLogtoClient:
         assert (
             url
             == "https://logto.app/oidc/auth?client_id=replace-with-your-app-id&redirect_uri=redirectUri&response_type=code&scope=email+phone+openid+offline_access+profile&resource=https%3A%2F%2Fresource1&resource=https%3A%2F%2Fresource2&prompt=login&code_challenge=codeChallenge&code_challenge_method=S256&state=state&interaction_mode=signUp"
+        )
+
+    async def test_signIn_firstScreen(self, client: LogtoClient) -> None:
+        # Get all possible identifier combinations
+        all_identifiers = list(Identifier)
+        possible_identifier_combinations: list[tuple[Identifier]] = []
+        for r in range(1, len(all_identifiers) + 1):
+            possible_identifier_combinations.extend(combinations(all_identifiers, r))
+
+        for firstScreen in FirstScreen:
+            for identifiers in possible_identifier_combinations:
+                url = await client.signIn(
+                    "redirectUri",
+                    firstScreen=firstScreen,
+                    identifiers=list(identifiers),
+                )
+
+                expected_identifiers = "+".join(
+                    quote(identifier.value) for identifier in identifiers
+                )
+                assert (
+                    url
+                    == f"https://logto.app/oidc/auth?client_id=replace-with-your-app-id&redirect_uri=redirectUri&response_type=code&scope=openid+offline_access+profile&prompt=consent&code_challenge=codeChallenge&code_challenge_method=S256&state=state&first_screen={quote(firstScreen.value)}&identifier={expected_identifiers}"
+                )
+
+    async def test_signIn_directSignIn_sso(self, client: LogtoClient) -> None:
+        url = await client.signIn(
+            "redirectUri",
+            directSignIn=DirectSignInOption(
+                method=DirectSignInOptionMethod.sso, identifier="arbitrary-sso-id"
+            ),
+        )
+
+        assert (
+            url
+            == "https://logto.app/oidc/auth?client_id=replace-with-your-app-id&redirect_uri=redirectUri&response_type=code&scope=openid+offline_access+profile&prompt=consent&code_challenge=codeChallenge&code_challenge_method=S256&state=state&direct_sign_in=sso%3Aarbitrary-sso-id"
+        )
+
+    async def test_signIn_directSignIn_social(self, client: LogtoClient) -> None:
+        url = await client.signIn(
+            "redirectUri",
+            directSignIn=DirectSignInOption(
+                method=DirectSignInOptionMethod.social, identifier="google"
+            ),
+        )
+
+        assert (
+            url
+            == "https://logto.app/oidc/auth?client_id=replace-with-your-app-id&redirect_uri=redirectUri&response_type=code&scope=openid+offline_access+profile&prompt=consent&code_challenge=codeChallenge&code_challenge_method=S256&state=state&direct_sign_in=social%3Agoogle"
+        )
+
+    async def test_signIn_extraParams(self, client: LogtoClient) -> None:
+        url = await client.signIn(
+            "redirectUri",
+            extraParams={"custom_param_1": "value_1", "custom_param_2": "value_2"},
+        )
+
+        assert (
+            url
+            == "https://logto.app/oidc/auth?client_id=replace-with-your-app-id&redirect_uri=redirectUri&response_type=code&scope=openid+offline_access+profile&prompt=consent&code_challenge=codeChallenge&code_challenge_method=S256&state=state&custom_param_1=value_1&custom_param_2=value_2"
+        )
+
+    async def test_signIn_multipleParams(self, client: LogtoClient) -> None:
+        url = await client.signIn(
+            "redirectUri",
+            interactionMode="signUp",
+            firstScreen=FirstScreen.register,
+            identifiers=[Identifier.email],
+            extraParams={"custom_param_1": "value_1", "custom_param_2": "value_2"},
+        )
+
+        assert (
+            url
+            == "https://logto.app/oidc/auth?client_id=replace-with-your-app-id&redirect_uri=redirectUri&response_type=code&scope=openid+offline_access+profile&prompt=consent&code_challenge=codeChallenge&code_challenge_method=S256&state=state&interaction_mode=signUp&first_screen=identifier%3Aregister&identifier=email&custom_param_1=value_1&custom_param_2=value_2"
         )
 
     async def test_signOut(

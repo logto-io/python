@@ -6,10 +6,11 @@ instance methods.
 
 import hashlib
 import secrets
-import aiohttp
-from jwt import PyJWKClient
-import jwt
 from typing import List, Optional
+
+import aiohttp
+import jwt
+from jwt import PyJWKClient
 
 from .LogtoException import LogtoException
 from .models.oidc import (
@@ -42,12 +43,14 @@ class OidcCore:
             metadata.jwks_uri, headers={"user-agent": "@logto/python", "accept": "*/*"}
         )
 
+    @staticmethod
     def generateState() -> str:
         """
         Generate a random string (32 bytes) for the state parameter.
         """
         return urlsafeEncode(secrets.token_bytes(32))
 
+    @staticmethod
     def generateCodeVerifier() -> str:
         """
         Generate a random code verifier string (32 bytes) for PKCE.
@@ -56,6 +59,7 @@ class OidcCore:
         """
         return urlsafeEncode(secrets.token_bytes(32))
 
+    @staticmethod
     def generateCodeChallenge(codeVerifier: str) -> str:
         """
         Generate a code challenge string for the given code verifier string.
@@ -64,12 +68,14 @@ class OidcCore:
         """
         return urlsafeEncode(hashlib.sha256(codeVerifier.encode("ascii")).digest())
 
+    @staticmethod
     def decodeIdToken(idToken: str) -> IdTokenClaims:
         """
         Decode the ID Token and return the claims without verifying the signature.
         """
         return IdTokenClaims(**jwt.decode(idToken, options={"verify_signature": False}))
 
+    @staticmethod
     def decodeAccessToken(accessToken: str) -> AccessTokenClaims:
         """
         Decode the access token and return the claims without verifying the signature.
@@ -78,6 +84,7 @@ class OidcCore:
             **jwt.decode(accessToken, options={"verify_signature": False})
         )
 
+    @staticmethod
     async def getProviderMetadata(discoveryUrl: str) -> OidcProviderMetadata:
         """
         Fetch the provider metadata from the discovery URL.

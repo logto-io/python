@@ -1,7 +1,8 @@
-from enum import Enum
-from typing import List, Optional, Any
-from pydantic import BaseModel, ConfigDict
 import warnings
+from enum import Enum
+from typing import Any, List, Optional, Type, TypeVar
+
+from pydantic import BaseModel, ConfigDict
 
 
 class OidcProviderMetadata(BaseModel):
@@ -59,8 +60,10 @@ class Scope(Enum):
         return member
 
     @classmethod
-    def _get_deprecated_member(cls, member):
-        # _get_deprecated_member is a protect util method to get the deprecated member with warning.
+    def _get_deprecated_member(cls, member: Any) -> Any:
+        """
+        Get the deprecated member with warning.
+        """
         warnings.warn(f"{member.name} is deprecated.", DeprecationWarning, stacklevel=2)
         return member
 
@@ -119,7 +122,7 @@ class UserInfoScope(Scope):
     """
 
     @classmethod
-    def _missing_(cls, value):
+    def _missing_(cls, value: Any) -> Any:
         """
         `_missing_` is a [built-in method](https://docs.python.org/3/library/enum.html#supported-sunder-names) to handle
         missing members, we overwrite it and throws a warning for deprecated members.
@@ -182,6 +185,108 @@ class ReservedResource(Enum):
 
     organizations = "urn:logto:resource:organizations"
     """The resource for organization template per [RFC 0001](https://github.com/logto-io/rfcs)."""
+
+
+T = TypeVar("T", bound="BaseEnum")
+
+
+class BaseEnum(Enum):
+    """Base enum class with common functionality"""
+
+    def __new__(cls, value: str):
+        member = object.__new__(cls)
+        member._value_ = value
+        return member
+
+    @classmethod
+    def from_value(cls: Type[T], value: str) -> Optional[T]:
+        """Create an enum member from a string value"""
+        try:
+            return cls(value)
+        except ValueError:
+            return None
+
+    def __str__(self) -> str:
+        return self.value
+
+
+class FirstScreen(BaseEnum):
+    """
+    The first screen for the sign-in experience.
+
+    Refer to [Authentication parameters > First screen](https://docs.logto.io/docs/references/openid-connect/authentication-parameters/#first-screen) for more information.
+    """
+
+    register = "identifier:register"
+    """
+    Show the register form on first screen.
+    """
+    sign_in = "identifier:sign_in"
+    """
+    Show the sign-in form on first screen.
+    """
+    single_sign_on = "single_sign_on"
+    """
+    Show the single sign-on form on first screen.
+    """
+    reset_password = "reset_password"
+    """
+    Show the reset password form on first screen.
+    """
+
+
+class Identifier(BaseEnum):
+    """
+    The identifiers for the sign-in experience. MUST work with `first_screen`.
+    """
+
+    username = "username"
+    """
+    Use `username` as identifier.
+    """
+    email = "email"
+    """
+    Use `email` as identifier.
+    """
+    phone = "phone"
+    """
+    Use `phone` as identifier.
+    """
+
+
+class DirectSignInOptionMethod(BaseEnum):
+    """
+    The prefix for the direct sign-in methods.
+    """
+
+    sso = "sso"
+    """
+    The prefix for the single sign-on (SSO) sign-in method.
+    """
+    social = "social"
+    """
+    The prefix for the social sign-in method.
+    """
+
+
+class DirectSignInOption(BaseModel):
+    """
+    The direct sign-in options.
+
+    Refer to [Authentication parameters > Direct sign-in](https://docs.logto.io/docs/references/openid-connect/authentication-parameters/#direct-sign-in) for more information.
+    """
+
+    method: DirectSignInOptionMethod
+    """
+    The method for the direct sign-in. See `DirectSignInOptionMethod` for more information.
+    """
+    identifier: str
+    """
+    The identifier for the direct sign-in.
+
+    `identifier` is IdP name when using social sign-in (method is `DirectSignInOptionMethod.social`).
+    `identifier` is enterprise SSO ID when using SSO sign-in (method is `DirectSignInOptionMethod.sso`).
+    """
 
 
 class AccessTokenClaims(BaseModel):
