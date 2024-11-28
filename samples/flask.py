@@ -1,13 +1,15 @@
-from flask import Flask, g, redirect, request, jsonify
-from logto import LogtoException
 from dotenv import load_dotenv
+from flask import Flask, g, jsonify, redirect, request
+
+from logto import LogtoException
+from logto.models.oidc import FirstScreen, Identifier
 from samples.authenticated import authenticated
+from samples.client import client
 from samples.config import (
     APP_SECRET_KEY,
     LOGTO_POST_LOGOUT_REDIRECT_URI,
     LOGTO_REDIRECT_URI,
 )
-from samples.client import client
 
 load_dotenv()
 app = Flask(__name__)
@@ -39,12 +41,22 @@ async def index():
 
 @app.route("/sign-in")
 async def sign_in():
-    return redirect(
-        await client.signIn(
-            redirectUri=LOGTO_REDIRECT_URI,
-            interactionMode="signUp",  # Remove to show the sign-in as the first screen
-        )
+    signInUrl = await client.signIn(
+        redirectUri=LOGTO_REDIRECT_URI,
+        interactionMode="signIn",
+        # Show sign in form on first screen
+        firstScreen=FirstScreen.sign_in,
+        # Show username/email on sign in form, MUST be used with `firstScreen` parameter
+        identifiers=[Identifier.email, Identifier.username],
+        # Go directly to `github` social sign-in
+        # E.g.:
+        # directSignIn=DirectSignInOption(
+        #     method=DirectSignInOptionMethod.social.value,
+        #     identifier="github",
+        # ),
+        directSignIn=None,
     )
+    return redirect(signInUrl)
 
 
 @app.route("/sign-out")

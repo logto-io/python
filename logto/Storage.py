@@ -52,6 +52,7 @@ class MemoryStorage(Storage):
     See `Storage` for the interface.
     """
 
+    @staticmethod
     def printWarning() -> None:
         print(
             "WARNING: Using MemoryStorage for Logto client, this should only be used for testing.",
@@ -67,7 +68,10 @@ class MemoryStorage(Storage):
 
     def set(self, key: str, value: Optional[str]) -> None:
         MemoryStorage.printWarning()
-        self._data[key] = value
+        if value is not None:
+            self._data[key] = value
+        else:
+            self._data.pop(key, None)
 
     def delete(self, key: str) -> None:
         MemoryStorage.printWarning()

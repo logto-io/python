@@ -3,13 +3,20 @@ The Logto client class and the related models.
 """
 
 import time
-from typing import Dict, List, Literal, Optional, Union
-from pydantic import BaseModel
 import urllib.parse
+from typing import Dict, List, Literal, Optional, Union
 
-from .models.oidc import ReservedResource, Scope, UserInfoScope
-from .Storage import MemoryStorage, Storage
+from pydantic import BaseModel
+
 from .LogtoException import LogtoException
+from .models.oidc import (
+    DirectSignInOption,
+    FirstScreen,
+    Identifier,
+    ReservedResource,
+    Scope,
+    UserInfoScope,
+)
 from .OidcCore import (
     AccessTokenClaims,
     IdTokenClaims,
@@ -17,6 +24,7 @@ from .OidcCore import (
     TokenResponse,
     UserInfoResponse,
 )
+from .Storage import MemoryStorage, Storage
 from .utilities import OrganizationUrnPrefix, buildOrganizationUrn, removeFalsyKeys
 
 
@@ -162,7 +170,8 @@ class LogtoClient:
         """
         accessTokenMap = self._storage.get("accessTokenMap")
         try:
-            return AccessTokenMap.model_validate_json(accessTokenMap)
+            # Returns parsed `AccessTokenMap` if valid JSON, otherwise will be caught by except clause
+            return AccessTokenMap.model_validate_json(accessTokenMap)  # type: ignore
         except:
             return AccessTokenMap(x={})
 
@@ -218,6 +227,10 @@ class LogtoClient:
         codeChallenge: str,
         state: str,
         interactionMode: Optional[InteractionMode] = None,
+        firstScreen: Optional[FirstScreen] = None,
+        identifiers: Optional[List[Identifier]] = None,
+        directSignIn: Optional[DirectSignInOption] = None,
+        extraParams: Optional[Dict[str, str]] = None,
     ) -> str:
         appId, prompt, resources, scopes = (
             self.config.appId,
@@ -248,6 +261,18 @@ class LogtoClient:
                     "code_challenge_method": "S256",
                     "state": state,
                     "interaction_mode": interactionMode,
+                    "first_screen": firstScreen,
+                    "identifier": (
+                        " ".join(identifier.value for identifier in identifiers or [])
+                        if identifiers
+                        else None
+                    ),
+                    "direct_sign_in": (
+                        f"{directSignIn.method}:{directSignIn.identifier}"
+                        if directSignIn
+                        else None
+                    ),
+                    **(extraParams or {}),
                 }
             ),
             True,
@@ -270,27 +295,49 @@ class LogtoClient:
     def _setSignInSession(self, signInSession: SignInSession) -> None:
         self._storage.set("signInSession", signInSession.model_dump_json())
 
+    def _clearAllTokens(self) -> None:
+        self._storage.delete("idToken")
+        self._storage.delete("refreshToken")
+        self._storage.delete("accessTokenMap")
+
     async def signIn(
-        self, redirectUri: str, interactionMode: Optional[InteractionMode] = None
+        self,
+        redirectUri: str,
+        interactionMode: Optional[InteractionMode] = None,
+        firstScreen: Optional[FirstScreen] = None,
+        identifiers: Optional[List[Identifier]] = None,
+        directSignIn: Optional[DirectSignInOption] = None,
+        extraParams: Optional[Dict[str, str]] = None,
     ) -> str:
         """
-        Returns the sign-in URL for the given redirect URI. You should redirect the user
-        to the returned URL to sign in.
+        Returns the sign-in URL for the given redirect URI.
 
-        By specifying the interaction mode, you can control whether the user will be
-        prompted for sign-in or sign-up on the first screen. If the interaction mode is
-        not specified, the default one will be used.
+        Args:
+            redirectUri: The URI to redirect after sign-in
+            interactionMode: Control whether to show sign-in or sign-up screen
+            firstScreen: Specify the first screen to show in sign-in experience
+            directSignIn: Configure direct sign-in options for SSO or social sign-in
 
         Example:
           ```python
-          return redirect(await client.signIn('https://example.com/callback'))
+          return redirect(await client.signIn(
+              'https://example.com/callback',
+              firstScreen=FirstScreen.register
+          ))
           ```
         """
         codeVerifier = OidcCore.generateCodeVerifier()
         codeChallenge = OidcCore.generateCodeChallenge(codeVerifier)
         state = OidcCore.generateState()
         signInUrl = await self._buildSignInUrl(
-            redirectUri, codeChallenge, state, interactionMode
+            redirectUri,
+            codeChallenge,
+            state,
+            interactionMode,
+            firstScreen,
+            identifiers,
+            directSignIn,
+            extraParams,
         )
 
         self._setSignInSession(
@@ -300,8 +347,7 @@ class LogtoClient:
                 state=state,
             )
         )
-        for key in ["idToken", "accessToken", "refreshToken"]:
-            self._storage.delete(key)
+        self._clearAllTokens()
 
         return signInUrl
 
@@ -323,9 +369,7 @@ class LogtoClient:
           return redirect(await client.signOut('https://example.com'))
           ```
         """
-        self._storage.delete("idToken")
-        self._storage.delete("refreshToken")
-        self._storage.delete("accessTokenMap")
+        self._clearAllTokens()
 
         endSessionEndpoint = (await self.getOidcCore()).metadata.end_session_endpoint
 
@@ -438,6 +482,8 @@ class LogtoClient:
         access token, an exception will be thrown.
         """
         accessToken = await self.getAccessToken(resource)
+        if accessToken is None:
+            raise LogtoException("Failed to get access token claims.")
         return OidcCore.decodeAccessToken(accessToken)
 
     async def getOrganizationTokenClaims(
@@ -486,4 +532,8 @@ class LogtoClient:
         is expired, it will be refreshed automatically.
         """
         accessToken = await self.getAccessToken()
+        if accessToken is None:
+            raise LogtoException(
+                "Can not get access token and fail to fetch user info."
+            )
         return await (await self.getOidcCore()).fetchUserInfo(accessToken)
