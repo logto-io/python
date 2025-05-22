@@ -3,7 +3,7 @@
 [![Logto](https://img.shields.io/badge/for-logto-7958ff)][Website]
 [![Stable Version](https://img.shields.io/pypi/v/logto?label=stable)][PyPI Releases]
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/logto)][PyPI]
-[![PyPI - License](https://img.shields.io/pypi/l/logto)](https://github.com/logto-io/python)
+[![PyPI - License](https://img.shields.io/python/required-version-toml?tomlFilePath=https%3A%2F%2Fraw.githubusercontent.com%2Flogto-io%2Fpython%2Fmaster%2Fpyproject.toml)](https://github.com/logto-io/python)
 [![Discord](https://img.shields.io/discord/965845662535147551?color=5865f2&logo=discord&label=discord)][Discord]
 
 ## Prerequisites
